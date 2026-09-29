@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kommunikationsprotokoll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf6ec;
+    --card: #fffdf8;
+    --stage: #f3efe4;
+    --text: #1f2430;
+    --muted: #555d6e;
+    --line: #e6dfcf;
+    --hl: #fff1b8;
+    --hlb: #e0a800;
+    --ok: #1a7f4b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 18px; }
+  body {
+    font-family: "Lexend", Verdana, Tahoma, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+    word-spacing: 0.06em;
+    padding: 16px 16px 120px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  /* ---------- Topp ---------- */
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .brand { font-weight: 600; }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 500;
+    border: 2px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  }
+  button:hover { border-color: #cfc5ad; }
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.4; cursor: default; transform: none; }
+  button.primary { background: var(--text); color: #fff; border-color: var(--text); }
+  button.primary.ready { background: var(--ok); border-color: var(--ok); animation: pulse 1.4s ease-in-out infinite; }
+  button.active { background: var(--hl); border-color: var(--hlb); }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(26, 127, 75, 0.45); }
+    50% { box-shadow: 0 0 0 10px rgba(26, 127, 75, 0); }
+  }
+
+  .progress { height: 8px; background: #ece5d3; border-radius: 99px; overflow: hidden; margin-bottom: 16px; }
+  #bar { height: 100%; width: 0; background: var(--text); transition: width 0.4s; }
+
+  /* ---------- Kort ---------- */
+  .card { background: var(--card); border-radius: 22px; padding: 28px; box-shadow: 0 8px 30px rgba(31, 36, 48, 0.07); }
+  .counter { color: var(--muted); font-size: 0.9rem; }
+  h1 { font-size: 1.8rem; line-height: 1.3; margin: 4px 0 20px; }
+  .content { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.3fr); gap: 28px; align-items: start; }
+
+  .points { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .points li {
+    padding: 12px 16px;
+    border-left: 6px solid var(--line);
+    border-radius: 10px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .points li.on { background: var(--hl); border-left-color: var(--hlb); }
+
+  .stage {
+    position: relative;
+    background: var(--stage);
+    border-radius: 18px;
+    padding: 24px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  /* ---------- Navigering ---------- */
+  .nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(250, 246, 236, 0.96);
+    backdrop-filter: blur(6px);
+    border-top: 2px solid var(--line);
+    padding: 12px 16px;
+    z-index: 20;
+  }
+  .nav-in { max-width: 1180px; margin: 0 auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #status { flex: 1; color: var(--muted); min-width: 160px; }
+  #status.done { color: var(--ok); font-weight: 600; }
+
+  /* ---------- Gemensamt ---------- */
+  .hid { opacity: 0 !important; transform: translateY(8px) !important; }
+  .ball {
+    position: absolute;
+    left: 0; top: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #6c5ce7;
+    box-shadow: 0 0 0 5px rgba(108, 92, 231, 0.25), 0 4px 10px rgba(0, 0, 0, 0.25);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    opacity: 0;
+  }
+  .ball.show { opacity: 1; }
+  .bx {
+    --c: #6c5ce7;
+    background: #fff;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    transition: all 0.4s;
+  }
+  .bx.on {
+    border-color: var(--c);
+    background: color-mix(in srgb, var(--c) 14%, #fff);
+    transform: scale(1.05);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--c) 25%, transparent);
+  }
+  .bx.done { border-color: color-mix(in srgb, var(--c) 45%, #fff); }
+  .bx strong { display: block; font-size: 0.9rem; line-height: 1.3; }
+  .bx small { display: block; color: var(--muted); font-size: 0.8rem; line-height: 1.3; }
+  .banner { background: var(--text); color: #fff; border-radius: 12px; padding: 10px 18px; font-weight: 500; text-align: center; transition: all 0.45s; }
+  .ico { width: 70px; height: 70px; stroke: var(--text); fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; display: block; margin: 0 auto 4px; }
+
+  /* Intro */
+  .duo { display: flex; align-items: center; gap: 16px; width: 100%; max-width: 520px; }
+  .dev { text-align: center; font-weight: 600; }
+  .wire { flex: 1; border-top: 4px dashed #c9bfa6; }
+
+  /* Komponenter */
+  .chain { display: grid; grid-template-columns: 1fr 1fr 1.5fr 1fr 1fr; gap: 10px; width: 100%; align-items: stretch; }
+  .chain .bx { display: flex; flex-direction: column; justify-content: center; }
+
+  /* Frame */
+  .frame {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr 1.3fr 1fr 1.6fr 0.8fr;
+    gap: 6px;
+    width: 100%;
+    padding: 12px;
+    border: 3px dashed transparent;
+    border-radius: 16px;
+    transition: border-color 0.5s;
+  }
+  .frame.env { border-color: var(--hlb); }
+  .ff {
+    background: #cfe6fb;
+    border: 2px solid #9cc7ef;
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.3;
+    transition: all 0.45s;
+  }
+  .ff strong { display: block; font-size: 0.85rem; }
+  .ff.data { background: #6c5ce7; color: #fff; border-color: #6c5ce7; }
+  .ff.on { transform: translateY(-6px); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15); border-color: var(--hlb); }
+  .env-label { font-weight: 600; transition: all 0.45s; }
+
+  /* Unicast, multicast, broadcast */
+  .mode-title { font-size: 1.4rem; font-weight: 600; text-align: center; line-height: 1.3; }
+  .mode-title small { display: block; font-size: 1rem; color: var(--muted); font-weight: 400; }
+  svg.net { width: 100%; max-width: 520px; }
+  .net line { stroke: #b9ae93; stroke-width: 3; }
+  .net .pc rect { fill: #fff; stroke: #1f2430; stroke-width: 2.5; transition: fill 0.3s; }
+  .net .pc path { stroke: #1f2430; stroke-width: 2.5; }
+  .net .pc.got rect { fill: #ffd54f; }
+  .net .sw { fill: #2e86de; }
+  .net text { font-family: inherit; font-size: 14px; fill: #555d6e; }
+
+  /* OSI och TCP/IP */
+  .models { display: grid; grid-template-columns: 1fr 84px 1fr; grid-template-rows: auto repeat(7, 40px); gap: 6px; width: 100%; max-width: 520px; }
+  .mh { text-align: center; font-weight: 600; }
+  .models .bx { padding: 4px 6px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+  .merge { display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; background: var(--hl); border-radius: 10px; transition: all 0.45s; text-align: center; line-height: 1.2; }
+
+  /* Avsändare och mottagare */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip { background: #fff; border: 2px solid var(--line); border-radius: 99px; padding: 6px 14px; font-size: 0.9rem; transition: all 0.45s; }
+  .pair { position: relative; display: grid; grid-template-columns: 1fr 1fr; width: 100%; max-width: 560px; }
+  .pair::after { content: ""; position: absolute; left: 25%; right: 25%; bottom: 8px; height: 4px; background: #d64541; border-radius: 4px; }
+  .col { padding: 0 14px; display: flex; flex-direction: column; }
+  .colh { text-align: center; font-weight: 600; margin-bottom: 8px; }
+  .osl { color: #fff; border-radius: 8px; padding: 4px 10px; margin-bottom: 5px; font-size: 0.85rem; opacity: 0.5; transition: all 0.35s; }
+  .osl.on { opacity: 1; transform: scale(1.05); box-shadow: 0 0 0 3px #1f2430; }
+  .osl.done { opacity: 1; }
+  .port { width: 20px; height: 20px; border-radius: 50%; background: #d64541; margin: 12px auto 0; position: relative; z-index: 1; }
+
+  /* Skiktkort */
+  .cards { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .lcard {
+    --c: #333;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: #fff;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    opacity: 0.45;
+    transition: all 0.4s;
+  }
+  .lcard.on { opacity: 1; border-color: var(--c); transform: scale(1.02); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+  .lcard.done { opacity: 0.85; }
+  .num { flex: 0 0 44px; height: 44px; border-radius: 12px; background: var(--c); color: #fff; font-weight: 600; font-size: 1.2rem; display: grid; place-items: center; }
+  .lname { font-weight: 600; }
+  .lname small { font-weight: 400; color: var(--muted); }
+  .lex { max-height: 0; overflow: hidden; transition: max-height 0.5s; color: var(--muted); }
+  .lcard.on .lex, .lcard.done .lex { max-height: 140px; }
+  .bits { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.15em; color: var(--text); }
+
+  /* Tidslinje */
+  .timeline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .timeline .bx { min-width: 150px; }
+  .arrow { font-size: 1.5rem; transition: all 0.45s; }
+  .tstack { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 300px; }
+  .ts { border-radius: 10px; padding: 8px; text-align: center; font-weight: 500; transition: all 0.45s; }
+
+  /* Protokollstack */
+  .prows { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .prow { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; border-radius: 12px; padding: 10px; }
+  .plabel { font-weight: 600; font-size: 0.9rem; }
+  .pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pchip { background: #2e86de; color: #fff; border-radius: 8px; padding: 4px 10px; font-size: 0.85rem; transition: all 0.4s; }
+  .pchip.dim { opacity: 0.25; }
+  .pchip.key { background: #1f2430; transform: scale(1.12); }
+
+  /* Protokollsamverkan */
+  .coop { display: flex; align-items: center; gap: 28px; width: 100%; justify-content: center; }
+  .srv { text-align: center; font-weight: 600; }
+  .pstack { display: flex; flex-direction: column; gap: 8px; flex: 1; max-width: 420px; }
+  .prl { display: flex; align-items: center; gap: 12px; border-radius: 12px; padding: 12px 14px; border: 2px solid transparent; transition: all 0.4s; }
+  .prl .slot { flex: 0 0 26px; height: 26px; border-radius: 50%; border: 2px dashed rgba(0, 0, 0, 0.3); }
+  .prl .nm { font-weight: 600; }
+  .prl .tg { margin-left: auto; font-size: 0.85rem; opacity: 0; transition: opacity 0.4s; text-align: right; }
+  .prl.on { border-color: #1f2430; transform: scale(1.03); }
+  .prl.on .tg, .prl.done .tg { opacity: 1; }
+
+  /* PDU */
+  .pdus { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .pdu { display: grid; grid-template-columns: 1fr 100px; gap: 10px; align-items: center; transition: all 0.45s; }
+  .pblocks { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+  .pb { border-radius: 8px; padding: 6px 10px; color: #fff; font-size: 0.8rem; }
+  .pb.d { background: #6c5ce7; }
+  .pb.t { background: #0984e3; }
+  .pb.n { background: #00a884; }
+  .pb.f { background: #e17055; }
+  .pname { font-weight: 600; background: #fff; border: 2px solid var(--line); border-radius: 10px; text-align: center; padding: 4px; transition: all 0.4s; }
+  .pdu.on .pname { background: var(--hl); border-color: var(--hlb); }
+  .bitsline { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.15em; font-size: 0.9rem; text-align: right; word-break: break-all; min-height: 1.6em; }
+
+  @media (max-width: 900px) {
+    .content { grid-template-columns: 1fr; }
+    .stage { order: -1; }
+    .card { padding: 20px; }
+  }
+  @media (max-width: 640px) {
+    .chain { grid-template-columns: 1fr; }
+    .frame { grid-template-columns: 1fr 1fr; }
+    .prow { grid-template-columns: 1fr; }
+    .coop { flex-direction: column; }
+    .stage { padding: 16px; }
+    h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">Kommunikationsprotokoll</div>
+    <div class="tools">
+      <button id="btnRead">Läs upp</button>
+      <button id="btnSize">Större text</button>
+    </div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+
+  <main class="card">
+    <div class="counter" id="counter"></div>
+    <h1 id="title"></h1>
+    <div class="content">
+      <ul class="points" id="points"></ul>
+      <div class="stage" id="stage"></div>
+    </div>
+  </main>
+</div>
+
+<nav class="nav">
+  <div class="nav-in">
+    <button id="btnPrev">← Föregående</button>
+    <button id="btnReplay">↻ Spela igen</button>
+    <span id="status"></span>
+    <button id="btnNext" class="primary">Nästa →</button>
+  </div>
+</nav>
+
+<script>
+  // ---------- Hjälpfunktioner ----------
+  const STOP = Symbol("stop");
+  let runId = 0;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function wait(ms, id) { await sleep(ms); if (id !== runId) throw STOP; }
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const show = el => el.classList.remove("hid");
+
+  function hl(i) {
+    $$("#points li").forEach((li, n) => li.classList.toggle("on", n === i));
+  }
+  function setOn(list, i) {
+    list.forEach((el, n) => {
+      el.classList.toggle("on", n === i);
+      el.classList.toggle("done", n < i);
+    });
+  }
+  function centerOf(target, stage) {
+    const s = stage.getBoundingClientRect(), r = target.getBoundingClientRect();
+    return { x: r.left + r.width / 2 - s.left, y: r.top + r.height / 2 - s.top };
+  }
+  function placeBall(ball, target) {
+    const p = centerOf(target, ball.parentElement);
+    ball.style.transition = "opacity .3s";
+    ball.style.left = p.x + "px";
+    ball.style.top = p.y + "px";
+  }
+  async function moveBall(ball, target, ms, id) {
+    const p = centerOf(target, ball.parentElement);
+    ball.style.transition = `left ${ms}ms ease-in-out, top ${ms}ms ease-in-out, opacity .3s`;
+    ball.style.left = p.x + "px";
+    ball.style.top = p.y + "px";
+    await wait(ms, id);
+  }
+  function tween(ms, fn, id) {
+    return new Promise((res, rej) => {
+      const start = performance.now();
+      function f(now) {
+        if (id !== runId) { rej(STOP); return; }
+        const p = Math.min((now - start) / ms, 1);
+        fn(p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+        p < 1 ? requestAnimationFrame(f) : res();
+      }
+      requestAnimationFrame(f);
+    });
+  }
+
+  const PC = `<svg viewBox="0 0 48 48" class="ico"><rect x="6" y="8" width="36" height="24" rx="3"/><path d="M18 40h12M24 32v8"/></svg>`;
+  const SERVER = `<svg viewBox="0 0 48 48" class="ico"><rect x="10" y="6" width="28" height="14" rx="3"/><rect x="10" y="26" width="28" height="14" rx="3"/><path d="M16 13h.01M16 33h.01M24 13h8M24 33h8"/></svg>`;
+
+  const OSI = [
+    ["7", "Applikation", "Application", "#b58b00"],
+    ["6", "Presentation", "Presentation", "#1f9e8f"],
+    ["5", "Session", "Session", "#8e44ad"],
+    ["4", "Transport", "Transport", "#2c3e50"],
+    ["3", "Nätverk", "Network", "#27864a"],
+    ["2", "Datalänk", "Data Link", "#c0392b"],
+    ["1", "Fysisk", "Physical", "#2c3e91"]
+  ];
+
+  function layerCards(list) {
+    return `<div class="cards">${list.map(it => `
+      <div class="lcard" style="--c:${it.c}">
+        <div class="num">${it.n}</div>
+        <div>
+          <div class="lname">${it.name} <small>(${it.en})</small></div>
+          <div class="lex">${it.ex}</div>
+        </div>
+      </div>`).join("")}</div>`;
+  }
+  async function playCards(st, id) {
+    const cards = $$(".lcard", st);
+    for (let i = 0; i < cards.length; i++) {
+      hl(i);
+      setOn(cards, i);
+      await wait(3600, id);
+    }
+  }
+
+  // ---------- Bilderna ----------
+  const slides = [
+    {
+      title: "Kommunikationsprotokoll",
+      points: [
+        "Här lär du dig hur datorer <b>pratar med varandra</b>.",
+        "Varje bild har en animation. Den startar av sig själv.",
+        "Den gula rutan visar vilken text animationen handlar om just nu.",
+        "När animationen är klar lyser knappen <b>Nästa</b> grönt."
+      ],
+      render(st) {
+        st.innerHTML = `
+          <div class="duo">
+            <div class="dev" id="a">${PC}Du</div>
+            <div class="wire"></div>
+            <div class="dev" id="b">${SERVER}Servern</div>
+          </div>
+          <div class="banner hid" id="bn">Tryck på <b>Läs upp</b> om du vill lyssna</div>
+          <div class="ball"></div>`;
+      },
+      async play(st, id) {
+        const ball = $(".ball", st);
+        hl(0); placeBall(ball, $("#a .ico", st)); ball.classList.add("show");
+        await wait(1500, id);
+        hl(1); await moveBall(ball, $("#b .ico", st), 1800, id);
+        await wait(600, id);
+        hl(2); await wait(2200, id);
+        hl(3); show($("#bn", st)); await wait(1500, id);
+      }
+    },
+
+    {
+      title: "Kommunikationskomponenter",
+      points: [
+        "All kommunikation börjar med ett <b>meddelande</b> hos <b>Source</b> (avsändaren).",
+        "Meddelandet går genom en <b>transmissionskanal</b>, till exempel en kabel eller luften.",
+        "<b>Destination</b> (mottagaren) tar emot meddelandet.",
+        "<b>Protokoll</b> är reglerna. Båda sidor måste följa samma regler."
+      ],
+      render(st) {
+        const items = [
+          ["Meddelande", "Source", "#e67e22"],
+          ["Sändare", "Signal Transmitter", "#e67e22"],
+          ["Överföringsmedium", "Transmission Medium", "#7f8c8d"],
+          ["Mottagare", "Signal Receiver", "#2e6fd8"],
+          ["Meddelande", "Destination", "#2e6fd8"]
+        ];
+        st.innerHTML = `
+          <div class="chain">${items.map(it => `<div class="bx" style="--c:${it[2]}"><strong>${it[0]}</strong><small>${it[1]}</small></div>`).join("")}</div>
+          <div class="banner hid" id="bn">Protokoll: båda följer samma regler</div>
+          <div class="ball"></div>`;
+      },
+      async play(st, id) {
+        const boxes = $$(".chain .bx", st), ball = $(".ball", st);
+        hl(0); placeBall(ball, boxes[0]); ball.classList.add("show"); setOn(boxes, 0);
+        await wait(2200, id);
+        hl(1);
+        for (let i = 1; i <= 3; i++) { await moveBall(ball, boxes[i], 1000, id); setOn(boxes, i); await wait(500, id); }
+        hl(2); await moveBall(ball, boxes[4], 1000, id); setOn(boxes, 4);
+        await wait(2000, id);
+        hl(3); show($("#bn", st)); await wait(2200, id);
+      }
+    },
+
+    {
+      title: "Format och inkapsling",
+      points: [
+        "Ett meddelande formateras enligt <b>standarder</b> (gemensamma regler).",
+        "Innan det skickas läggs meddelandet i en <b>frame</b> (ram).",
+        "Ramen är som ett <b>kuvert</b>. Den har mottagarens och avsändarens fysiska adress.",
+        "Sist i ramen finns <b>FCS</b>. Den kontrollerar att inget blev fel på vägen."
+      ],
+      render(st) {
+        const f = [
+          ["Preamble", "Start-signal"],
+          ["Destination Address", "Mottagarens adress"],
+          ["Source Address", "Avsändarens adress"],
+          ["Type/Length", "Typ och längd"],
+          ["Data", "Meddelandet"],
+          ["FCS", "Felkontroll"]
+        ];
+        st.innerHTML = `
+          <div class="env-label hid" id="lbl">Frame (ram) = kuvertet runt meddelandet</div>
+          <div class="frame">${f.map((x, i) => `<div class="ff hid ${i === 4 ? "data" : ""}"><strong>${x[0]}</strong>${x[1]}</div>`).join("")}</div>`;
+      },
+      async play(st, id) {
+        const ff = $$(".ff", st), frame = $(".frame", st);
+        hl(0); show(ff[4]); ff[4].classList.add("on");
+        await wait(2600, id); ff[4].classList.remove("on");
+        hl(1); frame.classList.add("env"); show($("#lbl", st)); show(ff[0]); show(ff[3]);
+        await wait(2600, id);
+        hl(2); show(ff[1]); show(ff[2]); ff[1].classList.add("on"); ff[2].classList.add("on");
+        await wait(3000, id); ff[1].classList.remove("on"); ff[2].classList.remove("on");
+        hl(3); show(ff[5]); ff[5].classList.add("on");
+        await wait(2400, id);
+      }
+    },
+
+    {
+      title: "Kommunikationssätt",
+      points: [
+        "<b>Unicast</b>: en till en. Meddelandet går till en mottagare.",
+        "<b>Multicast</b>: en till en grupp. Meddelandet går till några utvalda.",
+        "<b>Broadcast</b>: en till alla. Alla i nätverket får meddelandet."
+      ],
+      render(st) {
+        const ys = [45, 115, 185, 255];
+        st.innerHTML = `
+          <div class="mode-title"><span id="mt">Unicast</span><small id="ms">En till en</small></div>
+          <svg class="net" viewBox="0 0 520 300">
+            <line x1="82" y1="150" x2="200" y2="150"/>
+            ${ys.map(y => `<line x1="260" y1="150" x2="418" y2="${y}"/>`).join("")}
+            <g class="pc" transform="translate(60,150)"><rect x="-22" y="-16" width="44" height="30" rx="4"/><path d="M-10 22h20"/></g>
+            <text x="38" y="192">Source</text>
+            <rect class="sw" x="200" y="135" width="60" height="30" rx="6"/>
+            <text x="208" y="190">Switch</text>
+            ${ys.map(y => `<g class="pc tpc" transform="translate(440,${y})"><rect x="-22" y="-16" width="44" height="30" rx="4"/><path d="M-10 22h20"/></g>`).join("")}
+            <g id="dots"></g>
+          </svg>`;
+      },
+      async play(st, id) {
+        const ys = [45, 115, 185, 255];
+        const pcs = $$(".tpc", st), dots = $("#dots", st);
+        async function fly(a, b, ms) {
+          const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          c.setAttribute("r", 9); c.setAttribute("fill", "#6c5ce7");
+          dots.appendChild(c);
+          await tween(ms, p => {
+            c.setAttribute("cx", a[0] + (b[0] - a[0]) * p);
+            c.setAttribute("cy", a[1] + (b[1] - a[1]) * p);
+          }, id);
+          c.remove();
+        }
+        const modes = [
+          ["Unicast", "En till en", [3]],
+          ["Multicast", "En till en grupp", [1, 3]],
+          ["Broadcast", "En till alla", [0, 1, 2, 3]]
+        ];
+        for (let i = 0; i < modes.length; i++) {
+          const [name, sub, targets] = modes[i];
+          hl(i);
+          $("#mt", st).textContent = name;
+          $("#ms", st).textContent = sub;
+          pcs.forEach(p => p.classList.remove("got"));
+          await wait(900, id);
+          await fly([82, 150], [230, 150], 900);
+          await Promise.all(targets.map(k => fly([230, 150], [418, ys[k]], 1000)));
+          targets.forEach(k => pcs[k].classList.add("got"));
+          await wait(2600, id);
+        }
+      }
+    },
+
+    {
+      title: "Kommunikationsmodeller",
+      points: [
+        "Det finns två viktiga modeller: <b>OSI</b> och <b>TCP/IP</b>.",
+        "OSI är en <b>referensmodell</b>. Den ger ett gemensamt språk för alla nätverksprotokoll och tjänster.",
+        "TCP/IP slår ihop <b>Applikation, Presentation och Session</b> till ett skikt: Application.",
+        "TCP/IP slår ihop <b>Datalänk och Fysisk</b> till ett skikt: Network Access.",
+        "En modell är bara en bild av nätverket. Den är inte själva nätverket."
+      ],
+      render(st) {
+        const tcp = [["Application", "2 / 5"], ["Transport", "5"], ["Internet", "6"], ["Network Access", "7 / 9"]];
+        st.innerHTML = `
+          <div class="models">
+            <div class="mh" style="grid-column:1">OSI</div>
+            <div class="mh" style="grid-column:3">TCP/IP</div>
+            ${OSI.map((o, i) => `<div class="bx osi hid" style="grid-column:1;grid-row:${i + 2}">${o[0]}. ${o[1]}</div>`).join("")}
+            ${tcp.map(t => `<div class="bx tcp hid" style="grid-column:3;grid-row:${t[1]}">${t[0]}</div>`).join("")}
+            <div class="merge hid" id="m1" style="grid-column:2;grid-row:2 / 5">3 blir 1</div>
+            <div class="merge hid" id="m2" style="grid-column:2;grid-row:7 / 9">2 blir 1</div>
+          </div>
+          <div class="banner hid" id="bn">En modell är en bild, inte själva nätverket</div>`;
+      },
+      async play(st, id) {
+        const osi = $$(".osi", st), tcp = $$(".tcp", st);
+        hl(0);
+        for (const o of osi) { show(o); await wait(220, id); }
+        await wait(400, id);
+        for (const t of tcp) { show(t); await wait(300, id); }
+        await wait(1800, id);
+        hl(1); await wait(3200, id);
+        hl(2);
+        [osi[0], osi[1], osi[2], tcp[0]].forEach(e => { e.style.setProperty("--c", "#e67e22"); e.classList.add("on"); });
+        show($("#m1", st));
+        await wait(3600, id);
+        [osi[0], osi[1], osi[2], tcp[0]].forEach(e => e.classList.remove("on"));
+        hl(3);
+        [osi[5], osi[6], tcp[3]].forEach(e => { e.style.setProperty("--c", "#2e6fd8"); e.classList.add("on"); });
+        show($("#m2", st));
+        await wait(3600, id);
+        [osi[5], osi[6], tcp[3]].forEach(e => e.classList.remove("on"));
+        hl(4); show($("#bn", st)); await wait(2600, id);
+      }
+    },
+
+    {
+      title: "Referensmodell: OSI",
+      points: [
+        "OSI-modellen skapades för att bli en <b>internationell</b> modell.",
+        "Men TCP/IP utvecklades snabbare och blev den <b>standard</b> som används.",
+        "Hos <b>avsändaren</b> går datan nedåt genom alla 7 skikt.",
+        "Hos <b>mottagaren</b> går datan uppåt igen, från skikt 1 till 7."
+      ],
+      render(st) {
+        const stack = OSI.map(o => `<div class="osl" style="background:${o[3]}">${o[0]}. ${o[1]}</div>`).join("");
+        st.innerHTML = `
+          <div class="chips">
+            <span class="chip hid" id="c1">OSI: internationell modell</span>
+            <span class="chip hid" id="c2">TCP/IP: blev standard</span>
+          </div>
+          <div class="pair">
+            <div class="col" id="snd"><div class="colh">Avsändare</div>${stack}<div class="port"></div></div>
+            <div class="col" id="rcv"><div class="colh">Mottagare</div>${stack}<div class="port"></div></div>
+          </div>
+          <div class="ball"></div>`;
+      },
+      async play(st, id) {
+        const s = $$("#snd .osl", st), r = $$("#rcv .osl", st), ball = $(".ball", st);
+        hl(0); show($("#c1", st)); await wait(2600, id);
+        hl(1); show($("#c2", st)); await wait(2600, id);
+        hl(2); placeBall(ball, s[0]); ball.classList.add("show");
+        for (let i = 0; i < 7; i++) { if (i) await moveBall(ball, s[i], 550, id); setOn(s, i); await wait(250, id); }
+        await moveBall(ball, $("#snd .port", st), 550, id);
+        s.forEach(e => { e.classList.remove("on"); e.classList.add("done"); });
+        hl(3); await moveBall(ball, $("#rcv .port", st), 1300, id);
+        for (let i = 6; i >= 0; i--) {
+          await moveBall(ball, r[i], 550, id);
+          r.forEach((e, n) => { e.classList.toggle("on", n === i); e.classList.toggle("done", n > i); });
+          await wait(250, id);
+        }
+        await wait(1500, id);
+      }
+    },
+
+    {
+      title: "OSI: skikt 7, 6 och 5",
+      points: [
+        "<b>7 Applikation</b>: ger nätverkstjänster till program som behöver nätverket.",
+        "<b>6 Presentation</b>: sköter teckenkodning, format för bild och video, kryptering och komprimering.",
+        "<b>5 Session</b>: startar, genomför och avslutar samtalet mellan avsändare och mottagare."
+      ],
+      render(st) {
+        st.innerHTML = layerCards([
+          { n: 7, name: "Applikation", en: "Application", c: OSI[0][3], ex: "Exempel: webbläsaren och e-postprogrammet." },
+          { n: 6, name: "Presentation", en: "Presentation", c: OSI[1][3], ex: "Exempel: en bild sparas som JPG. Ett lösenord krypteras." },
+          { n: 5, name: "Session", en: "Session", c: OSI[2][3], ex: "Exempel: som ett telefonsamtal. Det startar, pågår och avslutas." }
+        ]);
+      },
+      play: playCards
+    },
+
+    {
+      title: "OSI: skikt 4, 3, 2 och 1",
+      points: [
+        "<b>4 Transport</b>: ser till att meddelandet kommer fram utan ändringar. Vid behov skickas det igen.",
+        "<b>3 Nätverk</b>: identifierar avsändare och mottagare, så att meddelandet hittar rätt väg.",
+        "<b>2 Datalänk</b>: skickar ramar (frames) över olika typer av medier.",
+        "<b>1 Fysisk</b>: gör om data till signaler, ettor och nollor, och skickar dem på mediet."
+      ],
+      render(st) {
+        st.innerHTML = layerCards([
+          { n: 4, name: "Transport", en: "Transport", c: OSI[3][3], ex: "Exempel: som ett rekommenderat brev. Försvinner det, skickas ett nytt." },
+          { n: 3, name: "Nätverk", en: "Network", c: OSI[4][3], ex: "Exempel: som adressen på ett brev. Här används IP-adressen." },
+          { n: 2, name: "Datalänk", en: "Data Link", c: OSI[5][3], ex: "Exempel: posten mellan två grannar. Här används MAC-adressen." },
+          { n: 1, name: "Fysisk", en: "Physical", c: OSI[6][3], ex: "Exempel: el i kabel, ljus i fiber eller radio i Wi-Fi. <span class=\"bits\">1 0 1 1 0 0 1</span>" }
+        ]);
+      },
+      play: playCards
+    },
+
+    {
+      title: "Protokollmodell: TCP/IP",
+      points: [
+        "Den första skiktade protokollmodellen kom i början av <b>1970-talet</b>. Den kallades <b>Internetmodellen</b>.",
+        "TCP/IP följer samma struktur. Därför heter den <b>TCP/IP-modellen</b>.",
+        "TCP/IP är en <b>öppen standard</b>. Reglerna diskuteras öppet och skrivs ner i dokument, till exempel <b>RFC 1122</b>.",
+        "TCP/IP-modellen har <b>4 skikt</b>: Application, Transport, Internet och Network Access."
+      ],
+      render(st) {
+        const ts = [["Application", "#fbeec1"], ["Transport", "#dff1e3"], ["Internet", "#ece3f6"], ["Network Access", "#fbe1e1"]];
+        st.innerHTML = `
+          <div class="timeline">
+            <div class="bx hid" style="--c:#e67e22"><strong>1970-talet</strong><small>Internetmodellen skapas</small></div>
+            <div class="arrow hid">→</div>
+            <div class="bx hid" style="--c:#2e6fd8"><strong>TCP/IP</strong><small>följer samma struktur</small></div>
+            <div class="arrow hid">→</div>
+            <div class="bx hid" style="--c:#1a7f4b"><strong>RFC 1122</strong><small>öppen standard</small></div>
+          </div>
+          <div class="tstack">${ts.map(t => `<div class="ts hid" style="background:${t[1]}">${t[0]}</div>`).join("")}</div>`;
+      },
+      async play(st, id) {
+        const b = $$(".timeline .bx", st), a = $$(".arrow", st), ts = $$(".ts", st);
+        hl(0); show(b[0]); setOn(b, 0); await wait(3000, id);
+        hl(1); show(a[0]); show(b[1]); setOn(b, 1); await wait(3000, id);
+        hl(2); show(a[1]); show(b[2]); setOn(b, 2); await wait(3600, id);
+        hl(3); b[2].classList.remove("on");
+        for (const t of ts) { show(t); await wait(600, id); }
+        await wait(1800, id);
+      }
+    },
+
+    {
+      title: "TCP/IP-protokollstacken",
+      points: [
+        "En <b>protokollstack</b> är en samling protokoll som hör ihop.",
+        "TCP/IP är öppen. Därför kan alla tillverkare bygga nätverksteknik som fungerar tillsammans.",
+        "Varje skikt har sina egna protokoll.",
+        "När du besöker en webbsida används <b>HTTP, TCP, IP och Ethernet</b>."
+      ],
+      render(st) {
+        const rows = [
+          ["Application", "#fbeec1", ["DNS", "DHCP", "SMTP", "POP", "IMAP", "FTP", "SSH", "Telnet", "HTTP"]],
+          ["Transport", "#dff1e3", ["UDP", "TCP"]],
+          ["Internet", "#ece3f6", ["IP", "NAT", "ICMP", "OSPF", "EIGRP"]],
+          ["Network Access", "#fbe1e1", ["ARP", "PPP", "Ethernet", "Drivrutiner"]]
+        ];
+        st.innerHTML = `<div class="prows">${rows.map(r => `
+          <div class="prow" style="background:${r[1]}">
+            <div class="plabel">${r[0]}</div>
+            <div class="pchips">${r[2].map(p => `<span class="pchip hid" data-p="${p}">${p}</span>`).join("")}</div>
+          </div>`).join("")}</div>`;
+      },
+      async play(st, id) {
+        const chips = $$(".pchip", st);
+        hl(0); await wait(2400, id);
+        hl(1); await wait(3000, id);
+        hl(2); for (const c of chips) { show(c); await wait(180, id); }
+        await wait(1500, id);
+        hl(3);
+        const key = ["HTTP", "TCP", "IP", "Ethernet"];
+        chips.forEach(c => c.classList.add(key.includes(c.dataset.p) ? "key" : "dim"));
+        await wait(2800, id);
+      }
+    },
+
+    {
+      title: "Protokollsamverkan",
+      points: [
+        "<b>HTTP</b> bestämmer innehåll och format. Inte hur det skickas.",
+        "<b>TCP</b> delar upp HTTP-meddelandet i segment. Den styr storlek och hastighet.",
+        "<b>IP</b> lägger segmenten i paket, sätter adresser och väljer den bästa vägen.",
+        "<b>Ethernet</b> sköter datalänken och den fysiska överföringen i mediet."
+      ],
+      render(st) {
+        const l = [
+          ["HTTP", "#fff3a6", "Innehåll och format"],
+          ["TCP", "#e2e2e2", "Delar upp och kontrollerar"],
+          ["IP", "#cfcfcf", "Adresser och väg"],
+          ["Ethernet", "#a8d4ff", "Skickar datan"]
+        ];
+        st.innerHTML = `
+          <div class="coop">
+            <div class="srv" id="srv">${SERVER}Webbserver</div>
+            <div class="pstack">${l.map(x => `<div class="prl" style="background:${x[1]}"><span class="slot"></span><span class="nm">${x[0]}</span><span class="tg">${x[2]}</span></div>`).join("")}</div>
+          </div>
+          <div class="ball"></div>`;
+      },
+      async play(st, id) {
+        const rows = $$(".prl", st), ball = $(".ball", st);
+        placeBall(ball, $("#srv .ico", st)); ball.classList.add("show");
+        await wait(900, id);
+        for (let i = 0; i < rows.length; i++) {
+          hl(i);
+          await moveBall(ball, $(".slot", rows[i]), 900, id);
+          setOn(rows, i);
+          await wait(2800, id);
+        }
+      }
+    },
+
+    {
+      title: "PDU och inkapsling",
+      points: [
+        "Datan går ner genom modellen. På varje nivå läggs <b>styrinformation</b> till. Formen ändras, därför kallas den <b>PDU</b> (Protocol Data Unit).",
+        "<b>Data</b>: PDU i applikationsskiktet.",
+        "<b>Segment</b>: PDU i transportskiktet. Får ett transport-huvud.",
+        "<b>Packet</b>: PDU i internetskiktet. Får ett nätverks-huvud.",
+        "<b>Frame</b>: PDU i network access. Får ett huvud och en svans.",
+        "<b>Bits</b>: ettor och nollor som skickas fysiskt."
+      ],
+      render(st) {
+        const b = (t, c) => `<span class="pb ${c}">${t}</span>`;
+        const rows = [
+          ["Data", b("Data", "d")],
+          ["Segment", b("Transport-huvud", "t") + b("Data", "d")],
+          ["Packet", b("Nätverks-huvud", "n") + b("Transport-huvud", "t") + b("Data", "d")],
+          ["Frame", b("Ram-huvud", "f") + b("Nätverks-huvud", "n") + b("Transport-huvud", "t") + b("Data", "d") + b("Ram-svans", "f")],
+          ["Bits", `<div class="bitsline" id="bits"></div>`]
+        ];
+        st.innerHTML = `<div class="pdus">${rows.map(r => `
+          <div class="pdu hid"><div class="pblocks">${r[1]}</div><div class="pname">${r[0]}</div></div>`).join("")}</div>`;
+      },
+      async play(st, id) {
+        const rows = $$(".pdu", st);
+        hl(0); await wait(3800, id);
+        for (let i = 0; i < 4; i++) {
+          hl(i + 1); show(rows[i]); setOn(rows, i);
+          await wait(2800, id);
+        }
+        hl(5); show(rows[4]); setOn(rows, 4);
+        const bits = "11000101010001011001010010101010011010", out = $("#bits", st);
+        for (let i = 1; i <= bits.length; i++) { out.textContent = bits.slice(0, i); await wait(50, id); }
+        await wait(2000, id);
+      }
+    }
+  ];
+
+  // ---------- Styrning ----------
+  let current = 0;
+  const stage = $("#stage");
+  const btnPrev = $("#btnPrev"), btnNext = $("#btnNext"), btnReplay = $("#btnReplay");
+  const status = $("#status");
+
+  function renderSlide() {
+    runId++;
+    const id = runId;
+    const s = slides[current];
+    stopSpeech();
+    $("#counter").textContent = `Bild ${current + 1} av ${slides.length}`;
+    $("#title").textContent = s.title;
+    $("#points").innerHTML = s.points.map(p => `<li>${p}</li>`).join("");
+    $("#bar").style.width = ((current + 1) / slides.length * 100) + "%";
+    stage.innerHTML = "";
+    s.render(stage);
+    btnPrev.disabled = current === 0;
+    btnNext.textContent = current === slides.length - 1 ? "Börja om ↺" : "Nästa →";
+    btnNext.classList.remove("ready");
+    status.textContent = "Titta på animationen …";
+    status.classList.remove("done");
+    run(s, id);
+  }
+
+  async function run(s, id) {
+    try {
+      await wait(600, id);
+      await s.play(stage, id);
+      if (id !== runId) return;
+      hl(-1);
+      btnNext.classList.add("ready");
+      status.textContent = current === slides.length - 1 ? "Klart! Bra jobbat." : "Klart! Tryck på Nästa.";
+      status.classList.add("done");
+    } catch (e) {
+      if (e !== STOP) console.error(e);
+    }
+  }
+
+  function go(i) {
+    current = (i + slides.length) % slides.length;
+    renderSlide();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  btnPrev.addEventListener("click", () => { if (current > 0) go(current - 1); });
+  btnNext.addEventListener("click", () => go(current + 1));
+  btnReplay.addEventListener("click", renderSlide);
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") go(current + 1);
+    if (e.key === "ArrowLeft" && current > 0) go(current - 1);
+  });
+
+  // ---------- Läs upp ----------
+  const btnRead = $("#btnRead");
+  const canSpeak = "speechSynthesis" in window;
+  if (!canSpeak) btnRead.style.display = "none";
+
+  function stopSpeech() {
+    if (canSpeak) speechSynthesis.cancel();
+    btnRead.classList.remove("active");
+    btnRead.textContent = "Läs upp";
+  }
+  btnRead.addEventListener("click", () => {
+    if (btnRead.classList.contains("active")) { stopSpeech(); return; }
+    const s = slides[current];
+    const tmp = document.createElement("div");
+    tmp.innerHTML = s.points.join(" ");
+    const u = new SpeechSynthesisUtterance(s.title + ". " + tmp.textContent);
+    u.lang = "sv-SE";
+    u.rate = 0.9;
+    const sv = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith("sv"));
+    if (sv) u.voice = sv;
+    u.onend = stopSpeech;
+    speechSynthesis.speak(u);
+    btnRead.classList.add("active");
+    btnRead.textContent = "Stoppa uppläsning";
+  });
+
+  // ---------- Textstorlek ----------
+  const sizes = [18, 20, 22];
+  let sizeIdx = 0;
+  $("#btnSize").addEventListener("click", () => {
+    sizeIdx = (sizeIdx + 1) % sizes.length;
+    document.documentElement.style.fontSize = sizes[sizeIdx] + "px";
+    $("#btnSize").textContent = sizeIdx === sizes.length - 1 ? "Mindre text" : "Större text";
+    renderSlide();
+  });
+
+  // Starta om animationen om bredden ändras (positionerna ändras då)
+  let lastW = window.innerWidth, rt;
+  window.addEventListener("resize", () => {
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    clearTimeout(rt);
+    rt = setTimeout(renderSlide, 250);
+  });
+
+  renderSlide();
+</script>
+</body>
+</html>
