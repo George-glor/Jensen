@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Norrviken-labben facit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("norrviken-theme"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fbf9f4;
+    --ink: #1c1e21;
+    --soft: #5d6168;
+    --rule: #ddd6c8;
+    --acc: #c2410c;
+    --acc-soft: #fbe3d3;
+    --teal: #0f766e;
+    --teal-soft: #d6efea;
+    --ok: #3f7d20;
+    --ok-soft: #e2f0d6;
+    --bad: #be123c;
+    --code: #16181b;
+    --codeink: #d8dbe0;
+    --mark: #fff0a8;
+    --shadow: 0 1px 0 rgba(0,0,0,.03), 0 10px 28px -16px rgba(0,0,0,.22);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #121417;
+    --paper: #1a1d21;
+    --ink: #e8e5de;
+    --soft: #9aa0a8;
+    --rule: #2c3036;
+    --acc: #fb923c;
+    --acc-soft: #3a2517;
+    --teal: #5eead4;
+    --teal-soft: #13302b;
+    --ok: #9ad36b;
+    --ok-soft: #1e2c16;
+    --bad: #fb7185;
+    --code: #0b0c0e;
+    --codeink: #d8dbe0;
+    --mark: #4b3f10;
+    --shadow: none;
+    color-scheme: dark; } }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  [data-theme="dark"] {
+    --bg: #121417;
+    --paper: #1a1d21;
+    --ink: #e8e5de;
+    --soft: #9aa0a8;
+    --rule: #2c3036;
+    --acc: #fb923c;
+    --acc-soft: #3a2517;
+    --teal: #5eead4;
+    --teal-soft: #13302b;
+    --ok: #9ad36b;
+    --ok-soft: #1e2c16;
+    --bad: #fb7185;
+    --code: #0b0c0e;
+    --codeink: #d8dbe0;
+    --mark: #4b3f10;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.65 "IBM Plex Sans", system-ui, sans-serif;
+    transition: background .35s, color .35s;
+  }
+  a { color: var(--acc); }
+  code, kbd, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+  p code, li code, td code, .tt code, .qt code {
+    background: color-mix(in srgb, var(--acc) 10%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .topbar-in { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 10px 20px; }
+  .logo { font-family: "IBM Plex Mono"; font-weight: 600; font-size: .88rem; white-space: nowrap; }
+  .logo span { color: var(--acc); }
+  .meter { flex: 1; height: 6px; background: var(--rule); border-radius: 9px; overflow: hidden; min-width: 60px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--acc); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .pct { font-family: "IBM Plex Mono"; font-size: .82rem; min-width: 3.2em; text-align: right; color: var(--soft); }
+  .btn {
+    font: 500 .85rem "IBM Plex Sans", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .2s, transform .1s, background .2s;
+  }
+  .btn:hover { border-color: var(--soft); }
+  .btn:active { transform: translateY(1px); }
+  .btn.on { background: var(--acc-soft); border-color: var(--acc); }
+  .theme-btn { width: 36px; padding: 7px 0; text-align: center; }
+  .theme-btn svg { width: 16px; height: 16px; vertical-align: -3px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ---------- layout ---------- */
+  .layout { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; padding: 30px 20px 90px; }
+  .toc { position: sticky; top: 76px; align-self: start; font-size: .88rem; }
+  .toc-h { font-family: "IBM Plex Mono"; font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--soft); margin: 0 0 8px 8px; }
+  .toc a { display: flex; gap: 8px; align-items: baseline; color: var(--soft); text-decoration: none; padding: 4px 8px; border-radius: 6px; transition: background .2s, color .2s; }
+  .toc a:hover { color: var(--ink); }
+  .toc a.cur { color: var(--ink); background: var(--paper); box-shadow: inset 2px 0 0 var(--acc); }
+  .toc a .n { font-family: "IBM Plex Mono"; color: var(--acc); font-size: .8rem; min-width: 1.6em; }
+  .toc a.done::after { content: "ok"; font-family: "IBM Plex Mono"; font-size: .7rem; margin-left: auto; color: var(--ok); }
+  main { max-width: 860px; min-width: 0; }
+  @media (max-width: 1020px) { .layout { grid-template-columns: 1fr; } .toc { display: none; } }
+
+  /* ---------- hero ---------- */
+  .kicker { font-family: "IBM Plex Mono"; font-size: .8rem; letter-spacing: .04em; color: var(--soft); }
+  .kicker b { color: var(--acc); font-weight: 600; }
+  h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.08; letter-spacing: -.025em; margin: 12px 0 18px; font-weight: 700; }
+  h1 em { font-style: normal; background: linear-gradient(transparent 62%, var(--mark) 62%); padding: 0 4px; }
+  .lede { font-size: 1.1rem; max-width: 62ch; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 26px 0; }
+  .facts div { padding: 12px 14px; border-left: 1px solid var(--rule); }
+  .facts div:first-child { border-left: 0; padding-left: 0; }
+  .facts dt { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--soft); }
+  .facts dd { margin: 2px 0 0; font-weight: 600; }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr 1fr; } .facts div:nth-child(3) { border-left: 0; padding-left: 0; } }
+  .who { display: flex; gap: 12px; flex-wrap: wrap; }
+  .who label { font-size: .85rem; color: var(--soft); display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+
+  /* ---------- sektioner ---------- */
+  .del { margin-top: 70px; }
+  .del-head { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: end; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 20px; }
+  .del-no { font-family: "IBM Plex Mono"; font-weight: 600; font-size: 2.6rem; line-height: .9; color: var(--acc); }
+  .del-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.25; letter-spacing: -.01em; }
+    .goal { color: var(--soft); margin-top: -6px; }
+  h3 { font-size: 1.05rem; margin: 30px 0 10px; }
+  h3::before { content: "// "; font-family: "IBM Plex Mono"; color: var(--acc); font-weight: 500; }
+
+  /* ---------- tasks ---------- */
+  .tasks { display: flex; flex-direction: column; gap: 2px; margin: 12px 0; }
+  .task { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .2s; }
+  .task:hover { background: var(--paper); }
+  .task input { position: absolute; opacity: 0; pointer-events: none; }
+  .task .box { width: 22px; height: 22px; margin-top: 3px; border: 2px solid var(--soft); border-radius: 6px; display: grid; place-items: center; transition: border-color .2s, background .2s, transform .15s; }
+  .task .box svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .task .box path { stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .35s ease .05s; }
+  .task input:checked + .box { background: var(--ok); border-color: var(--ok); transform: scale(1.06); }
+  .task input:checked + .box path { stroke-dashoffset: 0; }
+  .task input:focus-visible + .box { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .task input:checked ~ .tt { color: var(--soft); }
+
+  /* ---------- frågor ---------- */
+  .q { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 16px 0; border-top: 1px dashed var(--rule); }
+  .qn { font-family: "IBM Plex Mono"; font-weight: 600; color: var(--acc); padding-top: 1px; }
+  .qt { font-weight: 500; }
+  textarea, input.blank, .who input {
+    width: 100%;
+    font: 16px/1.55 "IBM Plex Sans", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 9px 11px;
+    margin-top: 8px;
+    resize: vertical;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea:focus, input.blank:focus, .who input:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+  input.blank { margin: 0; padding: 5px 7px; font-family: "IBM Plex Mono"; font-size: .85rem; min-width: 110px; }
+  .saved { font-family: "IBM Plex Mono"; font-size: .72rem; color: var(--ok); opacity: 0; transition: opacity .3s; }
+  .saved.show { opacity: 1; }
+
+  /* ---------- facit ---------- */
+  .facit {
+    margin-top: 10px;
+    border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+    background: var(--ok-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: .96rem;
+  }
+  .facit-h { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--ok); font-weight: 600; margin-bottom: 4px; }
+  .facit p { margin: 6px 0; }
+  .facit ul { margin: 6px 0; padding-left: 20px; }
+  .ans-inline { font-family: "IBM Plex Mono"; font-size: .85rem; color: var(--ok); font-weight: 600; }
+  body.hide-facit .facit { display: none; }
+  body.hide-facit .ans-inline { color: transparent; background: var(--rule); border-radius: 4px; }
+
+  /* ---------- notes ---------- */
+  .note { position: relative; background: var(--paper); border: 1px solid var(--rule); border-left: 4px solid var(--acc); border-radius: 4px 10px 10px 4px; padding: 14px 16px 12px; margin: 18px 0; box-shadow: var(--shadow); }
+  .note .hand { font-family: "Caveat", cursive; font-size: 1.35rem; color: var(--acc); line-height: 1; display: block; margin-bottom: 4px; transform: rotate(-1.5deg); transform-origin: left; }
+  .note p { margin: 4px 0; }
+  .note ul { margin: 6px 0; padding-left: 20px; }
+  .tnote { border-left-color: var(--teal); }
+  .tnote .hand { color: var(--teal); }
+
+  details.hint { margin: 10px 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); overflow: hidden; }
+  details.hint summary { cursor: pointer; padding: 9px 14px; font-weight: 500; color: var(--teal); list-style: none; display: flex; gap: 8px; align-items: center; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: "+"; font-family: "IBM Plex Mono"; font-weight: 600; transition: transform .25s; display: inline-block; }
+  details.hint[open] summary::before { transform: rotate(45deg); }
+  details.hint > div { padding: 0 14px 12px; animation: drop .3s ease; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- cli ---------- */
+  pre.cli {
+    position: relative;
+    background: var(--code);
+    color: var(--codeink);
+    font: 14px/1.6 "IBM Plex Mono", monospace;
+    padding: 16px 16px 14px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 10px 0;
+    border: 1px solid #25282d;
+  }
+  pre.cli .pr { color: #fdba74; }
+  pre.cli .cm { color: #7c8591; }
+  pre.cli .copy {
+    position: absolute; top: 8px; right: 8px;
+    font: 500 .72rem "IBM Plex Mono";
+    color: #aeb4bd; background: #23262b; border: 1px solid #33373d;
+    border-radius: 6px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .2s;
+  }
+  pre.cli:hover .copy, pre.cli .copy:focus { opacity: 1; }
+
+  /* ---------- tabeller ---------- */
+  .tbl { overflow-x: auto; margin: 12px 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); font-weight: 500; background: color-mix(in srgb, var(--rule) 35%, transparent); }
+  tr:last-child td { border-bottom: 0; }
+  td.m { font-family: "IBM Plex Mono"; font-size: .84rem; white-space: nowrap; }
+
+  /* ---------- topologi ---------- */
+  .topo-wrap { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
+  #topo { width: 100%; height: auto; display: block; }
+  #topo .zone { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  #topo .zlabel { font: 500 12px "IBM Plex Mono"; fill: var(--soft); letter-spacing: .06em; }
+  #topo .link { stroke: var(--soft); stroke-width: 2; opacity: .55; }
+  #topo .link.trunk { stroke: var(--acc); stroke-width: 3.5; opacity: .8; }
+  #topo .llabel { font: 11px "IBM Plex Mono"; fill: var(--soft); }
+  #topo .dev { cursor: pointer; }
+  #topo .dev .shape { fill: var(--paper); stroke: var(--ink); stroke-width: 2; transition: fill .2s; }
+  #topo .dev .glyph { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #topo .dev text { font: 600 12px "IBM Plex Mono"; fill: var(--ink); text-anchor: middle; }
+  #topo .dev:hover .shape, #topo .dev.sel .shape { fill: var(--acc-soft); }
+  #topo .pkt { stroke: var(--paper); stroke-width: 2; }
+  #topo .pulse { fill: none; stroke-width: 2; animation: pulse .8s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+  #topo .xmark { font: 700 26px "IBM Plex Sans"; text-anchor: middle; animation: fadeout 1.1s ease forwards; }
+  @keyframes pulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
+  @keyframes fadeout { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+  .topo-foot { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; margin-top: 8px; font-size: .82rem; color: var(--soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .devinfo { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bg); font-size: .92rem; min-height: 46px; }
+  .devinfo b { font-family: "IBM Plex Mono"; }
+
+  /* ---------- reveal ---------- */
+  .rv { transform: translateY(16px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+
+  footer { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--soft); font-size: .85rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+  @media print {
+    :root, [data-theme="dark"] { --bg: #fff; --paper: #fff; --ink: #000; --soft: #444; --rule: #bbb; --code: #f3f3f3; --codeink: #000; }
+    .topbar, .toc, .no-print, pre.cli .copy { display: none !important; }
+    .layout { display: block; padding: 0; }
+    .rv { opacity: 1 !important; transform: none !important; }
+    .del { break-inside: auto; margin-top: 30px; }
+    .q { break-inside: avoid; }
+    details.hint { display: none; }
+  }
+</style>
+</head>
+<body data-v="larare">
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="logo">norrviken<span>/</span>labb</div>
+    <div class="meter" title="Hur många uppgifter du bockat av"><i id="meter"></i></div>
+    <div class="pct" id="pct">0 %</div>
+    <button class="btn no-print" id="facitBtn">Dölj facit</button>
+    <button class="btn theme-btn no-print" id="themeBtn" aria-label="Byt mellan ljust och mörkt läge">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc">
+    <div class="toc-h">Innehåll</div>
+    <a href="#start"><span class="n">00</span>Läs först</a>
+    <a href="#del1"><span class="n">01</span>Uppvärmning</a>
+    <a href="#del2"><span class="n">02</span>Kablar</a>
+    <a href="#del3"><span class="n">03</span>IP-planen</a>
+    <a href="#del4"><span class="n">04</span>Grundkonfig</a>
+    <a href="#del5"><span class="n">05</span>VLAN</a>
+    <a href="#del6"><span class="n">06</span>Router-on-a-stick</a>
+    <a href="#del7"><span class="n">07</span>DHCP</a>
+    <a href="#del8"><span class="n">08</span>Routing</a>
+    <a href="#del9"><span class="n">09</span>DNS och paket</a>
+    <a href="#del10"><span class="n">10</span>NAT</a>
+    <a href="#del11"><span class="n">11</span>Säkerhet</a>
+    <a href="#del12"><span class="n">12</span>Trådlöst</a>
+    <a href="#del13"><span class="n">13</span>Felsökning</a>
+    <a href="#del14"><span class="n">14</span>Sollentuna</a>
+    <a href="#del15"><span class="n">15</span>Extra</a>
+    <a href="#kurs"><span class="n">K</span>Kopplat till kursen</a>
+  </nav>
+
+  <main>
+    <header class="hero" id="start">
+      <div class="kicker">Dator- och nätverkskommunikation 3 &nbsp;/&nbsp; Cisco Packet Tracer &nbsp;/&nbsp; <b>Version med facit</b></div>
+      <h1>Norrviken Cykel behöver ett <em>riktigt</em> nätverk</h1>
+      <p class="lede">Norrviken Cykel har en butik i Järfälla och en liten verkstad i Kallhäll. Just nu sitter kassan, personalens datorer och kundernas wifi på samma nät, och ägaren Leila har äntligen förstått att det inte håller. Hon har anlitat dig. Du bygger allt från kablarna och uppåt.</p>
+
+      <dl class="facts">
+                <div><dt>Form</dt><dd>Enskilt eller i par</dd></div>
+        <div><dt>Program</dt><dd>Packet Tracer 8.2+</dd></div>
+        <div><dt>Nivå</dt><dd>Dator- och kommunikationsteknik 3</dd></div>
+      </dl>
+
+      
+
+      
+      <div class="note tnote">
+        <span class="hand">om facit</span>
+        <p>Det här är samma labb som elevversionen, men med facit under varje fråga och konfiguration. Försök själv först och titta sedan. Knappen <b>Dölj facit</b> uppe till höger gömmer alla svar.</p>
+        <ul>
+          <li>Facit är byggt för <b>Cisco 2911</b> och <b>2960-24TT</b>. Väljer du en ISR 4331 heter portarna <code>G0/0/0</code> osv, då stämmer inte facit rakt av.</li>
+          <li>Adresser från DHCP kan skilja sig från dina. Det är logiken som ska stämma, inte exakta siffror.</li>
+        </ul>
+      </div>
+      
+
+      <div class="note">
+        <span class="hand">innan du börjar</span>
+        <ul>
+          <li><b>Spara ofta.</b> Ctrl+S. Packet Tracer kraschar gärna precis när allt äntligen fungerar.</li>
+          <li>Döp filen <code>Efternamn_Fornamn_Norrviken.pkt</code>.</li>
+          <li>Gör delarna i ordning. Varje del bygger på den förra.</li>
+          <li>Fastnar du mer än 10 minuter: läs ledtråden, fråga bänkgrannen, sedan mig.</li>
+          <li>Inget ska lämnas in. Jag går runt och du visar mig ditt nät när du kommit en bit.</li>
+          <li>Lösenorden i labben är bara för labben. Använd aldrig <code>cisco</code> på riktigt.</li>
+        </ul>
+      </div>
+
+      <h3>Så här ser nätet ut när du är klar</h3>
+      <div class="topo-wrap">
+        <svg id="topo" viewBox="0 0 1000 510" role="img" aria-label="Topologi för Norrviken Cykel"></svg>
+        <div class="topo-foot">
+          <div class="legend" id="legend"></div>
+          <button class="btn no-print" id="trafficBtn">Pausa trafiken</button>
+        </div>
+        <div class="devinfo" id="devinfo">Klicka på en enhet för att se vad den gör.</div>
+      </div>
+    </header>
+
+    <!-- ================= DEL 1 ================= -->
+    <section class="del" id="del1">
+      <div class="del-head"><div class="del-no">01</div><h2>Uppvärmning: ditt första lilla nät</h2></div>
+      <p class="goal">Innan Norrviken. Ett eget litet nät i en separat fil, bara för att komma igång med Packet Tracer och Simulation-läget.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t1"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa en ny fil <code>Uppvarmning.pkt</code>. Lägg ut en 2960-switch och tre PC.</span></label>
+        <label class="task"><input type="checkbox" data-k="t2"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Koppla PC1, PC2 och PC3 till switchen med raka kablar. Vänta tills alla länkar är gröna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t3"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ge PC:arna adresserna 192.168.1.1, 192.168.1.2 och 192.168.1.3 med mask 255.255.255.0.</span></label>
+        <label class="task"><input type="checkbox" data-k="t4"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga PC1 → PC3 från Command Prompt. Första pingen kan tappas, kör igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t5"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Klicka på switchen, CLI, och kör <code>show mac-address-table</code>. Hitta PC-arnas MAC-adresser (jämför med <code>ipconfig /all</code> på PC:arna).</span></label>
+        <label class="task"><input type="checkbox" data-k="t6"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Rensa ARP på PC1 med <code>arp -d</code>. Byt till <b>Simulation</b>, filtrera på ARP och ICMP, och pinga PC1 → PC3 igen. Stega med Capture/Forward.</span></label>
+        <label class="task"><input type="checkbox" data-k="t7"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ändra PC3 till 192.168.2.3 och pinga igen från PC1. Ändra tillbaka.</span></label>
+        <label class="task"><input type="checkbox" data-k="t8"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara. Nu börjar det riktiga jobbet i en ny fil.</span></label>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">I simuleringen: vilka PC fick ARP-förfrågan, och vilka fick svaret?</div><div class="facit"><div class="facit-h">Facit</div><p>ARP-förfrågan är en broadcast och gick till <b>både PC2 och PC3</b>. Bara PC3 svarade, och svaret gick som unicast <b>bara till PC1</b>.</p></div></div></div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vad hände när PC3 hade 192.168.2.3?</div><div class="facit"><div class="facit-h">Facit</div><p>Pingen misslyckades. PC1 ser att 192.168.2.3 ligger i ett annat nät och vill skicka till sin gateway, men ingen gateway finns. Kabeln och switchen är desamma, det är bara IP-näten som skiljer.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 2 ================= -->
+    <section class="del" id="del2">
+      <div class="del-head"><div class="del-no">02</div><h2>Kablar, kablar, kablar</h2></div>
+      <p class="goal">Placera ut alla enheter, döp dem och koppla ihop dem med rätt kabel i rätt port.</p>
+
+      <h3>Enheter</h3>
+      <div class="tbl"><table>
+        <tr><th>Namn</th><th>Modell i Packet Tracer</th><th>Plats</th><th>Roll</th></tr>
+        <tr><td class="m">R1</td><td>2911</td><td>Järfälla</td><td>Huvudrouter</td></tr>
+        <tr><td class="m">R2</td><td>2911</td><td>Kallhäll</td><td>Router i verkstaden</td></tr>
+        <tr><td class="m">ISP</td><td>2911</td><td>Internet</td><td>Internetleverantören</td></tr>
+        <tr><td class="m">SW1</td><td>2960-24TT</td><td>Järfälla</td><td>Switch i butiken</td></tr>
+        <tr><td class="m">SW2</td><td>2960-24TT</td><td>Kallhäll</td><td>Switch i verkstaden</td></tr>
+        <tr><td class="m">PC1, PC2</td><td>PC-PT</td><td>Järfälla</td><td>Personal</td></tr>
+        <tr><td class="m">PC3, PC4</td><td>PC-PT</td><td>Järfälla</td><td>Kassa</td></tr>
+        <tr><td class="m">GAST</td><td>Laptop-PT</td><td>Järfälla</td><td>Kundernas dator</td></tr>
+        <tr><td class="m">SRV1</td><td>Server-PT</td><td>Järfälla</td><td>Intranät och DNS</td></tr>
+        <tr><td class="m">PC5, PC6</td><td>PC-PT</td><td>Kallhäll</td><td>Verkstaden</td></tr>
+        <tr><td class="m">WEB-ISP</td><td>Server-PT</td><td>Internet</td><td>En webbsida "ute på internet"</td></tr>
+      </table></div>
+
+      <h3>Kopplingar</h3>
+      <p>Fyll i vilken kabeltyp som är rätt: <b>rak</b> (straight-through) eller <b>korsad</b> (crossover). Välj den själv i Packet Tracer, inte blixten "Automatically Choose".</p>
+      <div class="tbl"><table>
+        <tr><th>Från</th><th>Till</th><th>Kabel</th></tr>
+        <tr><td class="m">R1 G0/0</td><td class="m">SW1 G0/1</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">R1 G0/1</td><td class="m">R2 G0/1</td><td><span class="ans-inline">Korsad</span></td></tr>
+        <tr><td class="m">R1 G0/2</td><td class="m">ISP G0/1</td><td><span class="ans-inline">Korsad</span></td></tr>
+        <tr><td class="m">ISP G0/0</td><td class="m">WEB-ISP Fa0</td><td><span class="ans-inline">Korsad</span></td></tr>
+        <tr><td class="m">R2 G0/0</td><td class="m">SW2 G0/1</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">SW1 Fa0/1, Fa0/2</td><td class="m">PC1, PC2</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">SW1 Fa0/5</td><td class="m">SRV1 Fa0</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">SW1 Fa0/6, Fa0/7</td><td class="m">PC3, PC4</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">SW1 Fa0/11</td><td class="m">GAST Fa0</td><td><span class="ans-inline">Rak</span></td></tr>
+        <tr><td class="m">SW2 Fa0/1, Fa0/2</td><td class="m">PC5, PC6</td><td><span class="ans-inline">Rak</span></td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t9"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Placera ut alla enheter från tabellen och ändra <b>Display Name</b> så att de heter exakt som i tabellen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t10"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dra alla kablar enligt kopplingstabellen. Dubbelkolla portarna, fel port ger fel i del 5.</span></label>
+        <label class="task"><input type="checkbox" data-k="t11"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Rita tre streckade områden med Place Note/Rectangle: <i>Järfälla</i>, <i>Kallhäll</i> och <i>Internet</i>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t12"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Koppla en <b>konsolkabel</b> från PC1 (RS 232) till R1 (Console). Öppna Terminal på PC1 och kom in på R1. Svara <code>no</code> på frågan om initial configuration dialog.</span></label>
+        <label class="task"><input type="checkbox" data-k="t13"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara filen.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: rak eller korsad?</summary><div>
+        <p>Tänk i två grupper. Grupp A: switch och hub. Grupp B: router, PC och server. Olika grupper = rak kabel. Samma grupp = korsad kabel.</p>
+      </div></details>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Efter att du kopplat är vissa länkar röda och vissa orange en stund innan de blir gröna. Varför?</div><div class="facit"><div class="facit-h">Facit</div><p><b>Röd</b>: routerns portar är avstängda som standard (administratively down), de måste få <code>no shutdown</code>. <b>Orange</b>: switchporten går igenom Spanning Tree (listening/learning) i ungefär 30 sekunder innan den börjar skicka trafik, sedan blir den grön.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 3 ================= -->
+    <section class="del" id="del3">
+      <div class="del-head"><div class="del-no">03</div><h2>IP-planen (ja, det blir räkning)</h2></div>
+      <p class="goal">Innan man konfigurerar något gör man en plan. Här är Norrvikens nät. Fyll i det som saknas.</p>
+
+      <div class="tbl"><table>
+        <tr><th>Nät</th><th>Adress</th><th>Mask</th><th>Första värd</th><th>Sista värd</th><th>Broadcast</th><th>Antal värdar</th></tr>
+        <tr><td>VLAN 10 Personal</td><td class="m">192.168.10.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">192.168.10.1</span></td><td><span class="ans-inline">192.168.10.254</span></td><td><span class="ans-inline">192.168.10.255</span></td><td><span class="ans-inline">254</span></td></tr>
+        <tr><td>VLAN 20 Kassa</td><td class="m">192.168.20.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">192.168.20.1</span></td><td><span class="ans-inline">192.168.20.254</span></td><td><span class="ans-inline">192.168.20.255</span></td><td><span class="ans-inline">254</span></td></tr>
+        <tr><td>VLAN 30 Gäst</td><td class="m">192.168.30.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">192.168.30.1</span></td><td><span class="ans-inline">192.168.30.254</span></td><td><span class="ans-inline">192.168.30.255</span></td><td><span class="ans-inline">254</span></td></tr>
+        <tr><td>VLAN 99 Management</td><td class="m">192.168.99.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">192.168.99.1</span></td><td><span class="ans-inline">192.168.99.254</span></td><td><span class="ans-inline">192.168.99.255</span></td><td><span class="ans-inline">254</span></td></tr>
+        <tr><td>Kallhäll LAN</td><td class="m">192.168.50.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">192.168.50.1</span></td><td><span class="ans-inline">192.168.50.254</span></td><td><span class="ans-inline">192.168.50.255</span></td><td><span class="ans-inline">254</span></td></tr>
+        <tr><td>R1 till R2</td><td class="m">10.0.0.0/30</td><td><span class="ans-inline">255.255.255.252</span></td><td><span class="ans-inline">10.0.0.1</span></td><td><span class="ans-inline">10.0.0.2</span></td><td><span class="ans-inline">10.0.0.3</span></td><td><span class="ans-inline">2</span></td></tr>
+        <tr><td>R1 till ISP</td><td class="m">203.0.113.0/30</td><td><span class="ans-inline">255.255.255.252</span></td><td><span class="ans-inline">203.0.113.1</span></td><td><span class="ans-inline">203.0.113.2</span></td><td><span class="ans-inline">203.0.113.3</span></td><td><span class="ans-inline">2</span></td></tr>
+        <tr><td>Internet (ISP)</td><td class="m">198.51.100.0/24</td><td><span class="ans-inline">255.255.255.0</span></td><td><span class="ans-inline">198.51.100.1</span></td><td><span class="ans-inline">198.51.100.254</span></td><td><span class="ans-inline">198.51.100.255</span></td><td><span class="ans-inline">254</span></td></tr>
+      </table></div>
+
+      <h3>Adresstabell (den här använder du resten av labben)</h3>
+      <div class="tbl"><table>
+        <tr><th>Enhet</th><th>Interface</th><th>IP / prefix</th><th>Gateway</th></tr>
+        <tr><td class="m">R1</td><td class="m">G0/0.10</td><td class="m">192.168.10.1/24</td><td>-</td></tr>
+        <tr><td class="m">R1</td><td class="m">G0/0.20</td><td class="m">192.168.20.1/24</td><td>-</td></tr>
+        <tr><td class="m">R1</td><td class="m">G0/0.30</td><td class="m">192.168.30.1/24</td><td>-</td></tr>
+        <tr><td class="m">R1</td><td class="m">G0/0.99</td><td class="m">192.168.99.1/24</td><td>-</td></tr>
+        <tr><td class="m">R1</td><td class="m">G0/1</td><td class="m">10.0.0.1/30</td><td>-</td></tr>
+        <tr><td class="m">R1</td><td class="m">G0/2</td><td class="m">203.0.113.2/30</td><td>-</td></tr>
+        <tr><td class="m">R2</td><td class="m">G0/0</td><td class="m">192.168.50.1/24</td><td>-</td></tr>
+        <tr><td class="m">R2</td><td class="m">G0/1</td><td class="m">10.0.0.2/30</td><td>-</td></tr>
+        <tr><td class="m">ISP</td><td class="m">G0/1</td><td class="m">203.0.113.1/30</td><td>-</td></tr>
+        <tr><td class="m">ISP</td><td class="m">G0/0</td><td class="m">198.51.100.1/24</td><td>-</td></tr>
+        <tr><td class="m">SW1</td><td class="m">VLAN 99</td><td class="m">192.168.99.2/24</td><td class="m">192.168.99.1</td></tr>
+        <tr><td class="m">SW2</td><td class="m">VLAN 1</td><td class="m">192.168.50.2/24</td><td class="m">192.168.50.1</td></tr>
+        <tr><td class="m">SRV1</td><td class="m">Fa0</td><td class="m">192.168.10.10/24</td><td class="m">192.168.10.1</td></tr>
+        <tr><td class="m">WEB-ISP</td><td class="m">Fa0</td><td class="m">198.51.100.10/24</td><td class="m">198.51.100.1</td></tr>
+        <tr><td class="m">PC1-6, GAST</td><td class="m">Fa0</td><td>DHCP (från del 7)</td><td>DHCP</td></tr>
+      </table></div>
+
+    </section>
+
+    <!-- ================= DEL 4 ================= -->
+    <section class="del" id="del4">
+      <div class="del-head"><div class="del-no">04</div><h2>Namn och lås på alla enheter</h2></div>
+      <p class="goal">Grundkonfiguration på R1, R2, ISP, SW1 och SW2. Samma sak fem gånger, så efter tredje ska det sitta i fingrarna.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t14"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Sätt <b>hostname</b> så att prompten visar rätt namn.</span></label>
+        <label class="task"><input type="checkbox" data-k="t15"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Stäng av DNS-uppslag så att routern inte hänger sig när du skriver fel kommando.</span></label>
+        <label class="task"><input type="checkbox" data-k="t16"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Sätt <b>enable secret</b> till <code>class</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t17"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Sätt lösenordet <code>cisco</code> på konsolen och kräv inloggning.</span></label>
+        <label class="task"><input type="checkbox" data-k="t18"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kryptera alla lösenord i klartext i konfigurationen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t19"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg in en <b>banner motd</b> som varnar för obehörig åtkomst.</span></label>
+        <label class="task"><input type="checkbox" data-k="t20"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv <code>exit</code> tills du är ute, och logga in igen på konsolen för att testa lösenordet.</span></label>
+        <label class="task"><input type="checkbox" data-k="t21"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show running-config</code> och kontrollera att inga lösenord syns i klartext.</span></label>
+        <label class="task"><input type="checkbox" data-k="t22"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara konfigurationen på alla fem enheter. Starta om en av dem (Power-knappen) och kontrollera att allt finns kvar.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: kommandon du behöver</summary><div>
+        <p><code>enable</code>, <code>configure terminal</code>, <code>hostname</code>, <code>no ip domain-lookup</code>, <code>enable secret</code>, <code>line console 0</code>, <code>password</code>, <code>login</code>, <code>service password-encryption</code>, <code>banner motd</code>, <code>copy running-config startup-config</code>. Kör <code>?</code> om du är osäker på vad som kommer sedan.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! Samma mönster på alla fem, byt bara hostname</span>
+enable
+configure terminal
+hostname R1
+no ip domain-lookup
+enable secret class
+line console 0
+ password cisco
+ login
+ exit
+service password-encryption
+banner motd #Endast behorig personal. Obehorig atkomst ar forbjuden.#
+end
+copy running-config startup-config</code></pre>
+      </div>
+    </section>
+
+    <!-- ================= DEL 5 ================= -->
+    <section class="del" id="del5">
+      <div class="del-head"><div class="del-no">05</div><h2>VLAN: kassan ska inte prata med gästerna</h2></div>
+      <p class="goal">Dela upp SW1 i fyra VLAN och gör en trunk upp till R1.</p>
+
+      <div class="tbl"><table>
+        <tr><th>VLAN</th><th>Namn</th><th>Portar på SW1</th></tr>
+        <tr><td class="m">10</td><td class="m">PERSONAL</td><td class="m">Fa0/1-2, Fa0/5</td></tr>
+        <tr><td class="m">20</td><td class="m">KASSA</td><td class="m">Fa0/6-7</td></tr>
+        <tr><td class="m">30</td><td class="m">GAST</td><td class="m">Fa0/11</td></tr>
+        <tr><td class="m">99</td><td class="m">MGMT</td><td class="m">(bara SVI och trunk)</td></tr>
+        <tr><td class="m">Trunk</td><td></td><td class="m">G0/1 mot R1, tillåt 10,20,30,99</td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t23"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa VLAN 10, 20, 30 och 99 med namnen i tabellen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t24"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör portarna till <b>access</b>-portar och lägg dem i rätt VLAN. Använd <code>interface range</code>, du slipper skriva samma sak tre gånger.</span></label>
+        <label class="task"><input type="checkbox" data-k="t25"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör G0/1 till en <b>trunk</b> och tillåt bara VLAN 10, 20, 30 och 99.</span></label>
+        <label class="task"><input type="checkbox" data-k="t26"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ge SW1 adressen 192.168.99.2/24 på <code>interface vlan 99</code> och sätt default gateway 192.168.99.1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t27"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kontrollera med <code>show vlan brief</code> och <code>show interfaces trunk</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t28"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ge tillfälliga statiska IP-adresser: PC1 192.168.10.11, PC2 192.168.10.12, PC3 192.168.20.11 (mask /24). Testa ping PC1 → PC2 och PC1 → PC3.</span></label>
+        <label class="task"><input type="checkbox" data-k="t29"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show mac address-table</code> på SW1 och hitta PC1 och PC2. Vilken VLAN står de i?</span></label>
+        <label class="task"><input type="checkbox" data-k="t30"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Flytta tillfälligt Fa0/2 till VLAN 20 och pinga PC1 → PC2 igen. Flytta tillbaka till VLAN 10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t31"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: trunk på 2960</summary><div>
+        <p>2960 kan bara 802.1Q, så du behöver inte skriva <code>switchport trunk encapsulation</code>. Det räcker med <code>switchport mode trunk</code> och <code>switchport trunk allowed vlan ...</code>.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code>vlan 10
+ name PERSONAL
+vlan 20
+ name KASSA
+vlan 30
+ name GAST
+vlan 99
+ name MGMT
+exit
+interface range fa0/1-2, fa0/5
+ switchport mode access
+ switchport access vlan 10
+interface range fa0/6-7
+ switchport mode access
+ switchport access vlan 20
+interface fa0/11
+ switchport mode access
+ switchport access vlan 30
+interface g0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+interface vlan 99
+ ip address 192.168.99.2 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.99.1</code></pre>
+        <p>Förväntat: PC1 → PC2 fungerar. PC1 → PC3 fungerar inte.</p>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Ping PC1 → PC3 fungerar inte ännu. Varför?</div><div class="facit"><div class="facit-h">Facit</div><p>De ligger i olika VLAN och olika subnät. Ett VLAN är en egen broadcastdomän, och det finns ingen router som skickar trafik mellan dem än. Det fixar vi i del 6.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 6 ================= -->
+    <section class="del" id="del6">
+      <div class="del-head"><div class="del-no">06</div><h2>Router-on-a-stick</h2></div>
+      <p class="goal">En fysisk port på R1, fyra logiska subinterface. Nu ska VLAN:en kunna prata med varandra, men via routern.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t32"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Slå på R1 G0/0 (utan IP-adress på den fysiska porten).</span></label>
+        <label class="task"><input type="checkbox" data-k="t33"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa subinterface <code>G0/0.10</code>, <code>.20</code>, <code>.30</code> och <code>.99</code>. Varje subinterface ska ha rätt 802.1Q-VLAN och IP-adressen från adresstabellen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t34"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kontrollera med <code>show ip interface brief</code>. Alla subinterface ska vara up/up.</span></label>
+        <label class="task"><input type="checkbox" data-k="t35"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Sätt default gateway på PC1 (192.168.10.1), PC2 (192.168.10.1) och PC3 (192.168.20.1).</span></label>
+        <label class="task"><input type="checkbox" data-k="t36"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga PC1 → PC3. Nu ska det fungera. Pinga även SW1 på 192.168.99.2 från PC1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t37"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show interfaces g0/0.20</code> på R1 och hitta raden som visar VLAN-numret.</span></label>
+        <label class="task"><input type="checkbox" data-k="t38"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Stäng av R1 G0/0 med <code>shutdown</code>, pinga PC1 → PC3 och se vad som händer. Slå på den igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t39"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Byt till <b>Simulation</b>-läge, filtrera på ICMP och skicka en ping PC1 → PC3. Klicka på paketet när det är på trunken och öppna fliken <b>OSI Model</b> och <b>Outbound PDU Details</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t40"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: subinterface</summary><div>
+        <p><code>interface g0/0.10</code> skapar subinterfacet. Därefter <code>encapsulation dot1Q 10</code> och sedan <code>ip address</code>. Ordningen spelar roll: IP-adressen går inte att sätta innan encapsulation.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code>interface g0/0
+ no shutdown
+interface g0/0.10
+ description PERSONAL
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+interface g0/0.20
+ description KASSA
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+interface g0/0.30
+ description GAST
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+interface g0/0.99
+ description MGMT
+ encapsulation dot1Q 99
+ ip address 192.168.99.1 255.255.255.0
+end</code></pre>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">I simuleringen: hur många gånger passerar pingen (bara vägen dit) trunken mellan SW1 och R1? Vilken VLAN-tagg har ramen varje gång?</div><div class="facit"><div class="facit-h">Facit</div><p><b>Två gånger.</b> Upp till R1 med tagg <b>VLAN 10</b>, sedan ner igen med tagg <b>VLAN 20</b>. Routern tar emot på .10 och skickar ut på .20.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 7 ================= -->
+    <section class="del" id="del7">
+      <div class="del-head"><div class="del-no">07</div><h2>DHCP: ingen orkar skriva in IP-adresser</h2></div>
+      <p class="goal">R1 delar ut adresser i Järfälla, R2 i Kallhäll. SRV1 har fast adress.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t41"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R1: reservera .1-.20 i VLAN 10, 20 och 30 så att de inte delas ut.</span></label>
+        <label class="task"><input type="checkbox" data-k="t42"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R1: skapa tre pooler, <code>PERSONAL</code>, <code>KASSA</code> och <code>GAST</code>. Varje pool ska ha nät, default-router och DNS-server 192.168.10.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t43"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ge SRV1 fast adress 192.168.10.10/24, gateway 192.168.10.1, DNS 192.168.10.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t44"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R2: sätt IP på G0/0 (192.168.50.1/24) och slå på porten.</span></label>
+        <label class="task"><input type="checkbox" data-k="t45"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R2: reservera .1-.20 och skapa poolen <code>FILIAL</code> med DNS 192.168.10.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t46"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ge SW2 adressen 192.168.50.2/24 på VLAN 1 och gateway 192.168.50.1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t47"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ställ om PC1-PC6 och GAST till <b>DHCP</b>. Kolla med <code>ipconfig /all</code> att de fått rätt adress, gateway och DNS.</span></label>
+        <label class="task"><input type="checkbox" data-k="t48"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ip dhcp binding</code> på R1 och jämför med <code>ipconfig /all</code> på PC1. Stämmer MAC och IP?</span></label>
+        <label class="task"><input type="checkbox" data-k="t49"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På PC3: kör <code>ipconfig /release</code> och sedan <code>ipconfig /renew</code>. Fick den samma adress?</span></label>
+        <label class="task"><input type="checkbox" data-k="t50"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Simulation: filtrera på <b>DHCP</b>, ställ PC4 på static och sedan tillbaka på DHCP. Följ paketen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t51"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! R1</span>
+ip dhcp excluded-address 192.168.10.1 192.168.10.20
+ip dhcp excluded-address 192.168.20.1 192.168.20.20
+ip dhcp excluded-address 192.168.30.1 192.168.30.20
+ip dhcp pool PERSONAL
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 192.168.10.10
+ip dhcp pool KASSA
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 192.168.10.10
+ip dhcp pool GAST
+ network 192.168.30.0 255.255.255.0
+ default-router 192.168.30.1
+ dns-server 192.168.10.10
+
+<span class="cm">! R2</span>
+interface g0/0
+ description LAN Kallhall
+ ip address 192.168.50.1 255.255.255.0
+ no shutdown
+exit
+ip dhcp excluded-address 192.168.50.1 192.168.50.20
+ip dhcp pool FILIAL
+ network 192.168.50.0 255.255.255.0
+ default-router 192.168.50.1
+ dns-server 192.168.10.10
+
+<span class="cm">! SW2</span>
+interface vlan 1
+ ip address 192.168.50.2 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.50.1</code></pre>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vilken käll-IP och vilken destinations-IP har DHCP Discover? Varför?</div><div class="facit"><div class="facit-h">Facit</div><p>Källa <b>0.0.0.0</b> eftersom datorn inte har någon adress än. Destination <b>255.255.255.255</b> eftersom den inte vet vem DHCP-servern är. Destinations-MAC är FF:FF:FF:FF:FF:FF.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 8 ================= -->
+    <section class="del" id="del8">
+      <div class="del-head"><div class="del-no">08</div><h2>Kallhäll, hör ni oss?</h2></div>
+      <p class="goal">Koppla ihop kontoren och ge R1 en väg ut mot ISP. Här använder vi statiska routes.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t52"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R1: IP på G0/1 (10.0.0.1/30) och G0/2 (203.0.113.2/30). Slå på båda.</span></label>
+        <label class="task"><input type="checkbox" data-k="t53"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R2: IP på G0/1 (10.0.0.2/30). Slå på.</span></label>
+        <label class="task"><input type="checkbox" data-k="t54"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">ISP: IP på G0/1 (203.0.113.1/30) och G0/0 (198.51.100.1/24). Slå på båda.</span></label>
+        <label class="task"><input type="checkbox" data-k="t55"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">WEB-ISP: fast adress 198.51.100.10/24, gateway 198.51.100.1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t56"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R1: statisk route till Kallhäll-nätet via R2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t57"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R1: default route mot ISP.</span></label>
+        <label class="task"><input type="checkbox" data-k="t58"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R2: default route mot R1. All trafik som inte är lokal ska till huvudkontoret.</span></label>
+        <label class="task"><input type="checkbox" data-k="t59"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kolla <code>show ip route</code> på R1 och R2. Hitta raderna som börjar med C, L, S och S*.</span></label>
+        <label class="task"><input type="checkbox" data-k="t60"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa: PC5 → PC1 och PC5 → SRV1. Sedan PC1 → WEB-ISP (198.51.100.10). Skriv ner vad som händer.</span></label>
+        <label class="task"><input type="checkbox" data-k="t61"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>tracert 192.168.10.10</code> från PC5. Vilka routrar passerar paketet?</span></label>
+        <label class="task"><input type="checkbox" data-k="t62"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>ping 198.51.100.10</code> direkt från R1. Fungerar det där?</span></label>
+        <label class="task"><input type="checkbox" data-k="t63"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: statisk route</summary><div>
+        <p>Formen är <code>ip route [nät] [mask] [nästa hopp]</code>. En default route är nätet 0.0.0.0 med masken 0.0.0.0.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! R1</span>
+interface g0/1
+ description Till R2 Kallhall
+ ip address 10.0.0.1 255.255.255.252
+ no shutdown
+interface g0/2
+ description Till ISP
+ ip address 203.0.113.2 255.255.255.252
+ no shutdown
+exit
+ip route 192.168.50.0 255.255.255.0 10.0.0.2
+ip route 0.0.0.0 0.0.0.0 203.0.113.1
+
+<span class="cm">! R2</span>
+interface g0/1
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 10.0.0.1
+
+<span class="cm">! ISP</span>
+interface g0/1
+ ip address 203.0.113.1 255.255.255.252
+ no shutdown
+interface g0/0
+ ip address 198.51.100.1 255.255.255.0
+ no shutdown</code></pre>
+        <p>Förväntat: Kallhäll ↔ Järfälla fungerar. PC1 → WEB-ISP <b>fungerar inte</b>. Det är meningen.</p>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">PC1 kan inte pinga WEB-ISP, men R1 kan. Förklara varför. (Tänk på vägen tillbaka.)</div><div class="facit"><div class="facit-h">Facit</div><p>Pingen kommer fram till WEB-ISP, men svaret ska tillbaka till 192.168.10.x. ISP-routern har ingen route till det nätet (det är en privat adress som inte finns på internet), så svaret slängs. R1 pingar med källan 203.0.113.2 som ISP har direktansluten, därför fungerar det. Lösningen är NAT i del 10.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 9 ================= -->
+    <section class="del" id="del9">
+      <div class="del-head"><div class="del-no">09</div><h2>Intranätet, och paketen under luppen</h2></div>
+      <p class="goal">Sätt upp DNS och webb på SRV1. Sedan kikar vi på ett riktigt HTTP-paket och ser inkapslingen från lektionen med egna ögon.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t64"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV1 → Services → HTTP: se till att HTTP är på. Ändra <code>index.html</code> så att det står "Norrviken Cykel intranät" och ditt namn.</span></label>
+        <label class="task"><input type="checkbox" data-k="t65"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV1 → Services → DNS: slå på DNS. Lägg in A-posten <code>intranat.norrviken.local</code> → 192.168.10.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t66"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg även in A-posten <code>www.cykeldelar.test</code> → 198.51.100.10 (den används i del 10).</span></label>
+        <label class="task"><input type="checkbox" data-k="t67"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">WEB-ISP: ändra dess <code>index.html</code> till något eget, till exempel "Cykeldelar AB, bästa kedjorna sedan 1998".</span></label>
+        <label class="task"><input type="checkbox" data-k="t68"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC5 i Kallhäll: öppna Web Browser och gå till <code>http://intranat.norrviken.local</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t69"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>nslookup intranat.norrviken.local</code> på PC5.</span></label>
+        <label class="task"><input type="checkbox" data-k="t70"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Simulation: filtrera på <b>DNS, TCP och HTTP</b>. Ladda om sidan från PC5 och följ trafiken hela vägen. Fyll i tabellen nedan.</span></label>
+        <label class="task"><input type="checkbox" data-k="t71"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <h3>Paketet under luppen</h3>
+      <p>Följ <b>HTTP-förfrågan</b> (inte DNS). Titta på den på två ställen: <b>A</b> precis när den lämnat PC5, och <b>B</b> på trunken mellan R1 och SW1. Skriv inte exakta MAC-adresser, skriv vems de är.</p>
+      <div class="tbl"><table>
+        <tr><th>Fält</th><th>Lager</th><th>A: PC5 → SW2</th><th>B: R1 → SW1</th></tr>
+        <tr><td>Käll-MAC</td><td>2</td><td><span class="ans-inline">PC5</span></td><td><span class="ans-inline">R1 G0/0</span></td></tr>
+        <tr><td>Destinations-MAC</td><td>2</td><td><span class="ans-inline">R2 G0/0 (gateway)</span></td><td><span class="ans-inline">SRV1</span></td></tr>
+        <tr><td>VLAN-tagg</td><td>2</td><td><span class="ans-inline">Ingen</span></td><td><span class="ans-inline">VLAN 10</span></td></tr>
+        <tr><td>Käll-IP</td><td>3</td><td><span class="ans-inline">PC5 (192.168.50.x)</span></td><td><span class="ans-inline">PC5 (samma)</span></td></tr>
+        <tr><td>Destinations-IP</td><td>3</td><td><span class="ans-inline">192.168.10.10</span></td><td><span class="ans-inline">192.168.10.10</span></td></tr>
+        <tr><td>Källport</td><td>4</td><td><span class="ans-inline">Högt slumptal (t.ex. 1025)</span></td><td><span class="ans-inline">Samma</span></td></tr>
+        <tr><td>Destinationsport</td><td>4</td><td><span class="ans-inline">80</span></td><td><span class="ans-inline">80</span></td></tr>
+      </table></div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Titta på tabellen. Vilka fält ändrades mellan A och B, och vilka var kvar? Förklara varför med det vi läst om lager 2 och 3.</div><div class="facit"><div class="facit-h">Facit</div><p>MAC-adresserna (lager 2) byttes ut eftersom de bara gäller ett hopp i taget: varje router packar upp ramen och gör en ny. VLAN-taggen kom till på trunken. IP-adresserna (lager 3) och portarna (lager 4) var desamma hela vägen, de beskriver slutmålet och tjänsten.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 10 ================= -->
+    <section class="del" id="del10">
+      <div class="del-head"><div class="del-no">10</div><h2>NAT: ut på internet</h2></div>
+      <p class="goal">Alla privata adresser ska översättas till R1:s publika adress 203.0.113.2 på vägen ut.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t72"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Markera alla fyra subinterface och G0/1 som <b>inside</b>, och G0/2 som <b>outside</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t73"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa standard-ACL 1 som matchar alla 192.168-nät (Järfälla och Kallhäll).</span></label>
+        <label class="task"><input type="checkbox" data-k="t74"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Slå på PAT (overload) med ACL 1 och interfacet G0/2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t75"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC1: öppna <code>http://www.cykeldelar.test</code>. Från PC5 också.</span></label>
+        <label class="task"><input type="checkbox" data-k="t76"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ip nat translations</code> på R1 och läs av en rad.</span></label>
+        <label class="task"><input type="checkbox" data-k="t77"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Öppna sidan från PC3 och GAST också. Kör <code>show ip nat translations</code> igen och se att alla delar på 203.0.113.2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t78"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>clear ip nat translation *</code> och se att tabellen töms. Surfa igen så att den fylls på.</span></label>
+        <label class="task"><input type="checkbox" data-k="t79"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: wildcard-mask</summary><div>
+        <p>En ACL använder wildcard, inte vanlig mask. Tänk "omvänd mask": 255.255.0.0 blir 0.0.255.255.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code>interface range g0/0.10, g0/0.20, g0/0.30, g0/0.99
+ ip nat inside
+interface g0/1
+ ip nat inside
+interface g0/2
+ ip nat outside
+exit
+access-list 1 permit 192.168.0.0 0.0.255.255
+ip nat inside source list 1 interface g0/2 overload</code></pre>
+        <p>Om <code>interface range</code> med subinterface inte fungerar i din version av Packet Tracer: gör ett subinterface i taget.</p>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">I <code>show ip nat translations</code>: vad är skillnaden mellan <i>Inside local</i> och <i>Inside global</i>?</div><div class="facit"><div class="facit-h">Facit</div><p>Inside local är datorns riktiga, privata adress (t.ex. 192.168.10.21:1025). Inside global är adressen som visas utåt (203.0.113.2:1025).</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 11 ================= -->
+    <section class="del" id="del11">
+      <div class="del-head"><div class="del-no">11</div><h2>Lås dörrarna</h2></div>
+      <p class="goal">Nätet fungerar. Nu ska det vara svårt att förstöra det. Fyra delar: SSH, port security, oanvända portar och en ACL för gästerna.</p>
+
+      <h3>A. SSH istället för Telnet (R1 och SW1)</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t80"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Sätt domännamnet <code>norrviken.local</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t81"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa användaren <code>admin</code> med secret <code>Norrviken2026!</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t82"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Generera RSA-nycklar på 1024 bitar och slå på SSH version 2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t83"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På <code>line vty 0 4</code>: logga in med lokala användare och tillåt bara SSH.</span></label>
+        <label class="task"><input type="checkbox" data-k="t84"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa från PC1: <code>ssh -l admin 192.168.10.1</code> och <code>ssh -l admin 192.168.99.2</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t85"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa <code>telnet 192.168.10.1</code> från PC1. Det ska nekas.</span></label>
+      </div>
+
+      <h3>B. Port security (SW1)</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t86"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Slå på port security på Fa0/1-2, Fa0/6-7 och Fa0/11. Max en MAC-adress per port, lär in den med <b>sticky</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t87"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga från alla PC så att switchen lär sig adresserna. Kolla med <code>show port-security address</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t88"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Test: dra ur PC2, koppla in en ny laptop (INKRÄKTARE, statisk 192.168.10.99) i Fa0/2 och pinga. Vad händer med porten?</span></label>
+        <label class="task"><input type="checkbox" data-k="t89"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show port-security interface fa0/2</code> och hitta <i>Port Status</i> och <i>Security Violation Count</i>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t90"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Återställ: ta bort laptopen, koppla tillbaka PC2 och gör <code>shutdown</code> följt av <code>no shutdown</code> på Fa0/2.</span></label>
+      </div>
+
+      <h3>C. Oanvända portar (SW1)</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t91"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa VLAN 999 med namnet <code>OANVAND</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t92"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg alla oanvända portar i VLAN 999 och stäng av dem.</span></label>
+        <label class="task"><input type="checkbox" data-k="t93"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Koppla in en ny PC i Fa0/20 och se att den inte får någon länk. Ta bort den.</span></label>
+      </div>
+
+      <h3>D. Gäster ska bara ut på internet (R1)</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t94"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa en namngiven extended ACL <code>GAST-IN</code> som: släpper igenom DHCP, släpper igenom DNS till SRV1, stoppar allt till 192.168.0.0/16, och tillåter resten.</span></label>
+        <label class="task"><input type="checkbox" data-k="t95"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg den <b>inkommande</b> på G0/0.30.</span></label>
+        <label class="task"><input type="checkbox" data-k="t96"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa från GAST: <code>www.cykeldelar.test</code> ska fungera. <code>intranat.norrviken.local</code> och ping till PC1 ska inte fungera.</span></label>
+        <label class="task"><input type="checkbox" data-k="t97"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara allt.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: ordningen i en ACL</summary><div>
+        <p>En ACL läses uppifrån och ner och stannar vid första träffen. Lägg de specifika <code>permit</code> före den breda <code>deny</code>. Längst ner finns alltid ett osynligt <code>deny any</code>.</p>
+      </div></details>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! A. SSH, R1 (samma på SW1)</span>
+ip domain-name norrviken.local
+username admin secret Norrviken2026!
+crypto key generate rsa
+<span class="cm">! svara 1024 på frågan om modulus</span>
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+
+<span class="cm">! B. Port security, SW1</span>
+interface range fa0/1-2, fa0/6-7, fa0/11
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+
+<span class="cm">! C. Oanvända portar, SW1</span>
+vlan 999
+ name OANVAND
+interface range fa0/3-4, fa0/8-10, fa0/12-24, g0/2
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+<span class="cm">! D. ACL, R1</span>
+ip access-list extended GAST-IN
+ permit udp any any eq bootps
+ permit udp 192.168.30.0 0.0.0.255 host 192.168.10.10 eq domain
+ deny ip 192.168.30.0 0.0.0.255 192.168.0.0 0.0.255.255
+ permit ip 192.168.30.0 0.0.0.255 any
+interface g0/0.30
+ ip access-group GAST-IN in</code></pre>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Efter ACL:en kan GAST inte längre pinga sin egen gateway 192.168.30.1. Varför? Är det ett problem?</div><div class="facit"><div class="facit-h">Facit</div><p>192.168.30.1 ligger inom 192.168.0.0/16, så <code>deny</code>-raden stoppar pingen. En inkommande ACL gäller även trafik till routern själv. Det är inget problem för gästerna, de når internet ändå. Vill man tillåta ping lägger man in <code>permit icmp 192.168.30.0 0.0.0.255 host 192.168.30.1</code> före deny-raden.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 12 ================= -->
+    <section class="del" id="del12">
+      <div class="del-head"><div class="del-no">12</div><h2>Trådlöst: personal och gäster</h2></div>
+      <p class="goal">Leila vill ha två wifi-nät. Ett för personalen som hamnar i VLAN 10, och ett för kunderna som hamnar i VLAN 30. Samma ACL som i del 11 ska skydda kassan.</p>
+
+      <div class="tbl"><table>
+        <tr><th>Access point</th><th>Port på SW1</th><th>VLAN</th><th>SSID</th><th>Säkerhet</th><th>Kanal</th></tr>
+        <tr><td class="m">AP-PERSONAL</td><td class="m">Fa0/3</td><td class="m">10</td><td class="m">Norrviken-Personal</td><td class="m">WPA2-PSK, CykelPersonal26</td><td class="m">1</td></tr>
+        <tr><td class="m">AP-GAST</td><td class="m">Fa0/12</td><td class="m">30</td><td class="m">Norrviken-Gast</td><td class="m">WPA2-PSK, cyklarcyklar</td><td class="m">6</td></tr>
+      </table></div>
+
+      <h3>Access points</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t98"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg ut två <b>AccessPoint-PT</b>, döp dem till AP-PERSONAL och AP-GAST, och koppla dem till SW1 enligt tabellen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t99"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På SW1: gör Fa0/3 till access i VLAN 10 och Fa0/12 till access i VLAN 30. Slå på portarna, du stängde av dem i del 11.</span></label>
+        <label class="task"><input type="checkbox" data-k="t100"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På varje AP, fliken Config → Port 1: sätt SSID, WPA2-PSK, lösenord och kanal enligt tabellen.</span></label>
+      </div>
+
+      <h3>Trådlösa enheter</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t101"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg till en <b>Laptop-PT</b> som heter LAP-PERSONAL. Stäng av den (Power), ta bort det trådade nätverkskortet och sätt i <b>WPC300N</b>. Starta den igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t102"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På laptopen: Desktop → PC Wireless, eller Config → Wireless0. Anslut till Norrviken-Personal med rätt lösenord.</span></label>
+        <label class="task"><input type="checkbox" data-k="t103"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kolla med <code>ipconfig</code> att laptopen fått en 192.168.10.x-adress. Öppna intranätet.</span></label>
+        <label class="task"><input type="checkbox" data-k="t104"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg till en <b>Smartphone-PT</b> som heter MOBIL-GAST. Anslut den till Norrviken-Gast (Config → Wireless0).</span></label>
+        <label class="task"><input type="checkbox" data-k="t105"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kolla att mobilen fått 192.168.30.x, att <code>www.cykeldelar.test</code> fungerar och att intranätet <b>inte</b> gör det.</span></label>
+      </div>
+
+      <h3>Testa säkerheten</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t106"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv fel lösenord på mobilen. Vad händer? Skriv rätt igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t107"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Byt tillfälligt AP-GAST till <b>Disabled</b> (öppet nät). Anslut en tablet (Tablet-PT) utan lösenord. Byt tillbaka till WPA2-PSK och se att tableten tappar nätet.</span></label>
+        <label class="task"><input type="checkbox" data-k="t108"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Byt Physical-läge och dra mobilen långt bort från AP-GAST. När tappar den anslutningen? Flytta tillbaka.</span></label>
+        <label class="task"><input type="checkbox" data-k="t109"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! SW1</span>
+interface fa0/3
+ switchport mode access
+ switchport access vlan 10
+ no shutdown
+interface fa0/12
+ switchport mode access
+ switchport access vlan 30
+ no shutdown</code></pre>
+        <p>Port security ska inte vara på Fa0/3 och Fa0/12, flera trådlösa klienter syns som flera MAC-adresser på samma port. Kanal 1 och 6 används för att de två AP:na inte ska störa varandra.</p>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Mobilen är trådlös men stoppas ändå av samma ACL som den trådade gäst-datorn. Varför?</div><div class="facit"><div class="facit-h">Facit</div><p>AP-GAST är en lager 2-brygga. Den kopplar in mobilen i VLAN 30, samma nät som GAST. För R1 ser mobilen ut som vilken gäst som helst, och ACL:en GAST-IN på G0/0.30 gäller den.</p></div></div></div>
+    </section>
+
+    <!-- ================= DEL 13 ================= -->
+    <section class="del" id="del13">
+      <div class="del-head"><div class="del-no">13</div><h2>Något är trasigt</h2></div>
+      <p class="goal">Nu förstör du ditt eget nät med flit, ett fel i taget. Testa, titta på symptomet, hitta felet med ett kommando och laga det innan du går vidare till nästa. <b>Spara en kopia av filen först.</b></p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t110"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 1.</b> På SW1: ta bort VLAN 20 från trunken med <code>switchport trunk allowed vlan remove 20</code> på G0/1. Kör <code>ipconfig /renew</code> på PC3.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: PC3 får 169.254.x.x. Syns i <code>show interfaces trunk</code>. Laga: <code>switchport trunk allowed vlan add 20</code>.</p></div>
+        <label class="task"><input type="checkbox" data-k="t111"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 2.</b> På R1: ta bort routen till Kallhäll (<code>no ip route 192.168.50.0 ...</code>). Pinga PC5 → PC1 och PC5 → 10.0.0.1.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: PC5 når 10.0.0.1 men inte PC1, svaret hittar inte hem. Syns i <code>show ip route</code> på R1. Laga: lägg tillbaka routen.</p></div>
+        <label class="task"><input type="checkbox" data-k="t112"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 3.</b> På R1: ändra <code>dns-server</code> i poolen PERSONAL till 192.168.10.99. Kör <code>ipconfig /renew</code> på PC1 och öppna intranätet.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: ping till 192.168.10.10 fungerar, men namnet hittas inte. Syns i <code>ipconfig /all</code> och <code>nslookup</code>. Laga: rätt DNS-server och ny renew.</p></div>
+        <label class="task"><input type="checkbox" data-k="t113"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 4.</b> På R1: ta bort <code>ip nat outside</code> från G0/2. Surfa till www.cykeldelar.test från PC1.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: intranätet fungerar men inte internet, och <code>show ip nat translations</code> är tom. Syns i <code>show running-config | include nat</code>. Laga: lägg tillbaka.</p></div>
+        <label class="task"><input type="checkbox" data-k="t114"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 5.</b> Flytta kabeln från PC4 till Fa0/20 på SW1.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: röd länk. Porten ligger i VLAN 999 och är avstängd. Syns i <code>show vlan brief</code> och <code>show ip interface brief</code>. Laga: kabeln tillbaka i Fa0/7.</p></div>
+        <label class="task"><input type="checkbox" data-k="t115"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 6.</b> På R2: stäng av G0/1 med <code>shutdown</code>. Testa från PC5.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: Kallhäll når bara sitt eget nät. Syns i <code>show ip interface brief</code> (administratively down) och i routingtabellen. Laga: <code>no shutdown</code>.</p></div>
+        <label class="task"><input type="checkbox" data-k="t116"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 7.</b> Byt kanal på AP-PERSONAL till 6 och lösenordet till <code>fel12345</code>. Testa från LAP-PERSONAL.</span></label>
+      <div class="facit"><div class="facit-h">Facit</div><p>Symptom: laptopen tappar wifi och får ingen adress. Syns i PC Wireless (ingen anslutning) och i AP:ns Config. Laga: rätt lösenord och kanal 1 igen, anslut laptopen på nytt.</p></div>
+      </div>
+
+      <h3>Felloggen</h3>
+      
+      <p>Loggen fyller du i själv i elevversionen. Facit står under varje fel ovan.</p>
+
+      <h3>Sabotage-rundan</h3>
+      <p>Spara en kopia av din fil. Byt kopia med bänkgrannen. Lägg in <b>tre fel</b> i grannens fil utan att säga vilka (skriv ner dem på ett papper). Byt tillbaka. Nu har du 30 minuter att hitta och laga grannens fel i din fil. Fyll i loggen.</p>
+      
+      
+      <div class="note tnote">
+        <span class="hand">idéer om ni kör fast</span>
+        <p>Här finns inget facit, loggen är din egen. Bra fel att lägga in: byt VLAN på en port, ta bort ett VLAN från trunken, ändra dot1Q-nummer, ta bort en route, ändra DNS-server i en pool, stäng av en port. Ändra inte lösenord, då låser ni ute varandra.</p>
+      </div>
+      
+    </section>
+
+    <!-- ================= DEL 14 ================= -->
+    <section class="del" id="del14">
+      <div class="del-head"><div class="del-no">14</div><h2>Eget uppdrag: nytt kontor i Sollentuna</h2></div>
+      <p class="goal">Leila har öppnat ett tredje ställe. Den här gången får du bara specen. Inga ledtrådar, du har gjort allt det här förut.</p>
+
+      <div class="tbl"><table>
+        <tr><th>Vad</th><th>Spec</th></tr>
+        <tr><td>Nya enheter</td><td class="m">R3 (2911), SW3 (2960-24TT), PC7, PC8</td></tr>
+        <tr><td>Koppling till resten</td><td class="m">R2 G0/2 ↔ R3 G0/1, nät 10.0.0.4/30 (R2 .5, R3 .6)</td></tr>
+        <tr><td>LAN Sollentuna</td><td class="m">192.168.70.0/24, R3 G0/0 = .1, SW3 VLAN 1 = .2</td></tr>
+        <tr><td>DHCP</td><td class="m">På R3, reservera .1-.20, DNS 192.168.10.10</td></tr>
+        <tr><td>Säkerhet</td><td>Samma grundkonfig som del 4, och SSH på R3</td></tr>
+        <tr><td>Krav</td><td>PC7 ska nå intranätet, Kallhäll och www.cykeldelar.test</td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t117"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Placera ut, döp och kabla de nya enheterna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t118"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Grundkonfig på R3 och SW3.</span></label>
+        <label class="task"><input type="checkbox" data-k="t119"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">IP-adresser och DHCP i Sollentuna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t120"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Routing: tänk på vägen dit <i>och</i> tillbaka. Vilka routrar behöver veta om 192.168.70.0?</span></label>
+        <label class="task"><input type="checkbox" data-k="t121"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SSH på R3.</span></label>
+        <label class="task"><input type="checkbox" data-k="t122"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa kraven. PC7 → intranätet, PC7 → PC5, PC7 → www.cykeldelar.test.</span></label>
+        <label class="task"><input type="checkbox" data-k="t123"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dokumentera i filen: skriv IP-nät och portnamn som Notes vid de nya enheterna, så att nästa tekniker förstår topologin direkt.</span></label>
+        <label class="task"><input type="checkbox" data-k="t124"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! R3 (plus grundkonfig och SSH som på R1)</span>
+hostname R3
+interface g0/1
+ ip address 10.0.0.6 255.255.255.252
+ no shutdown
+interface g0/0
+ ip address 192.168.70.1 255.255.255.0
+ no shutdown
+exit
+ip dhcp excluded-address 192.168.70.1 192.168.70.20
+ip dhcp pool SOLLENTUNA
+ network 192.168.70.0 255.255.255.0
+ default-router 192.168.70.1
+ dns-server 192.168.10.10
+ip route 0.0.0.0 0.0.0.0 10.0.0.5
+
+<span class="cm">! R2</span>
+interface g0/2
+ ip address 10.0.0.5 255.255.255.252
+ no shutdown
+exit
+ip route 192.168.70.0 255.255.255.0 10.0.0.6
+
+<span class="cm">! R1 (NAT-ACL 1 täcker redan 192.168.70.0)</span>
+ip route 192.168.70.0 255.255.255.0 10.0.0.2
+
+<span class="cm">! SW3</span>
+interface vlan 1
+ ip address 192.168.70.2 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 192.168.70.1</code></pre>
+        <p>Vanligaste felet: glömd route på R1. Då når PC7 Kallhäll men inte Järfälla eller internet.</p>
+      </div>
+    </section>
+
+    <!-- ================= DEL 15 ================= -->
+    <section class="del" id="del15">
+      <div class="del-head"><div class="del-no">15</div><h2>Extra, för dig som är klar</h2></div>
+      <p class="goal">Frivilligt. För dig som är klar med allt annat.</p>
+
+      <h3>A. Byt ut de statiska routerna mot OSPF</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t125"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ta bort den statiska routen till Kallhäll på R1 och default-routen på R2. Behåll R1:s default route mot ISP. Har du gjort del 14: ta även bort routerna till 192.168.70.0 och ta med R3 i OSPF.</span></label>
+        <label class="task"><input type="checkbox" data-k="t126"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Starta OSPF process 1, area 0, på R1 och R2. Router-ID 1.1.1.1 och 2.2.2.2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t127"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Annonsera alla LAN och länken 10.0.0.0/30. Gör LAN-interfacen passiva.</span></label>
+        <label class="task"><input type="checkbox" data-k="t128"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Låt R1 skicka ut sin default route i OSPF.</span></label>
+        <label class="task"><input type="checkbox" data-k="t129"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kolla <code>show ip ospf neighbor</code> och <code>show ip route</code>. Testa PC5 → internet.</span></label>
+      </div>
+
+      <div class="facit"><div class="facit-h">Facit</div>
+<pre class="cli"><code><span class="cm">! R1</span>
+no ip route 192.168.50.0 255.255.255.0 10.0.0.2
+router ospf 1
+ router-id 1.1.1.1
+ network 10.0.0.0 0.0.0.3 area 0
+ network 192.168.10.0 0.0.0.255 area 0
+ network 192.168.20.0 0.0.0.255 area 0
+ network 192.168.30.0 0.0.0.255 area 0
+ network 192.168.99.0 0.0.0.255 area 0
+ passive-interface g0/0.10
+ passive-interface g0/0.20
+ passive-interface g0/0.30
+ passive-interface g0/0.99
+ default-information originate
+
+<span class="cm">! R2</span>
+no ip route 0.0.0.0 0.0.0.0 10.0.0.1
+router ospf 1
+ router-id 2.2.2.2
+ network 10.0.0.0 0.0.0.3 area 0
+ network 192.168.50.0 0.0.0.255 area 0
+ passive-interface g0/0</code></pre>
+        <p>Med R3: på R1 och R2 även <code>no ip route 192.168.70.0 255.255.255.0 ...</code>. På R2 lägg till <code>network 10.0.0.4 0.0.0.3 area 0</code>. På R3: <code>no ip route 0.0.0.0 0.0.0.0 10.0.0.5</code>, sedan <code>router ospf 1</code>, <code>router-id 3.3.3.3</code>, <code>network 10.0.0.4 0.0.0.3 area 0</code>, <code>network 192.168.70.0 0.0.0.255 area 0</code>, <code>passive-interface g0/0</code>.</p>
+        <p>På R2 ska routingtabellen visa <code>O</code> för Järfälla-näten och <code>O*E2</code> för default routen.</p>
+      </div>
+
+      <h3>B. IoT: smart lås och fläkt i verkstaden</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t130"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV1 → Services → IoT: slå på IoT-tjänsten.</span></label>
+        <label class="task"><input type="checkbox" data-k="t131"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från LAP-PERSONAL: öppna <code>http://192.168.10.10</code>, klicka <i>Sign up now</i> och skapa kontot <code>leila</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t132"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg till en <b>Door</b> och en <b>Ceiling Fan</b> (Home eller Smart Things). Anslut dem trådlöst till Norrviken-Personal (byt nätverkskort till trådlöst om det behövs).</span></label>
+        <label class="task"><input type="checkbox" data-k="t133"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På varje enhet: Config → Settings → IoT Server = <i>Remote Server</i>, adress 192.168.10.10, användare leila. Klicka Connect.</span></label>
+        <label class="task"><input type="checkbox" data-k="t134"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Logga in från laptopen igen. Lås dörren och slå på fläkten från webbsidan.</span></label>
+        <label class="task"><input type="checkbox" data-k="t135"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa från MOBIL-GAST: kommer gästen åt IoT-servern? Det ska den inte.</span></label>
+      </div>
+      <div class="facit"><div class="facit-h">Facit</div><p>Enheterna får adress från poolen PERSONAL och registrerar sig mot SRV1. Gästen stoppas av GAST-IN eftersom 192.168.10.10 bara är öppen för DNS (UDP 53). Om en enhet inte vill ansluta: kontrollera att den fått IP och att IoT-tjänsten är på.</p></div>
+
+      <h3>C. Dokumentation</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t136"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg en stor Note i Packet Tracer-filen som är en överlämning till Leila: vilka nät som finns, vilka wifi-nät, vad gästerna kommer åt, och vad hon ska göra om internet slutar fungera. Skriv så att någon som inte kan nätverk förstår.</span></label>
+      </div>
+    </section>
+
+    <section class="del" id="kurs">
+      <div class="del-head"><div class="del-no">K</div><h2>Kopplat till kursen</h2></div>
+      <p class="goal">Så här hänger labben ihop med det centrala innehållet i Dator- och kommunikationsteknik, nivå 3.</p>
+      <div class="tbl"><table>
+        <tr><th>Centralt innehåll (Skolverket)</th><th>Delar</th></tr>
+        <tr><td>Byggande, konfigurering och administrering av simulerade nät</td><td class="m">1-11, 14</td></tr>
+        <tr><td>Internets uppbyggnad</td><td class="m">8, 9, 10</td></tr>
+        <tr><td>Praktiskt arbete med referensmodeller, protokoll och standarder</td><td class="m">1, 5, 6, 7, 9</td></tr>
+        <tr><td>Konfigurering av trådlösa accesspunkter</td><td class="m">12</td></tr>
+        <tr><td>Inställning av trådlösa nätverkskort</td><td class="m">12</td></tr>
+        <tr><td>Integritetsaspekter och säkerhet vid användning av trådlösa enheter</td><td class="m">12</td></tr>
+        <tr><td>Konfigurering av säkerhetsfunktioner och kryptering</td><td class="m">4, 11, 12</td></tr>
+        <tr><td>Metoder för diagnostisering, spårning och felsökning</td><td class="m">8, 9, 13</td></tr>
+        <tr><td>Systematisk felsökning och åtgärdande av fel</td><td class="m">13</td></tr>
+        <tr><td>Felsökning i trådlösa lokala nätverk och utrustningar</td><td class="m">12, 13</td></tr>
+        <tr><td>Tolkning av tekniska dokument, däribland topologier</td><td class="m">2, 3, 14</td></tr>
+        <tr><td>Dokumentation av eget arbete</td><td class="m">13, 14, 15</td></tr>
+        <tr><td>Installation och konfigurering av IoT</td><td class="m">15</td></tr>
+      </table></div>
+    </section>
+
+
+    <footer>
+      <span>Labb: Norrviken Cykel / facit</span>
+      <span>Senast uppdaterad hösten 2026</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var V = document.body.getAttribute("data-v");
+  var KEY = "norrviken-lab-" + V;
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { store = {}; }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
+    var tag = document.getElementById("savedTag");
+    if (tag) { tag.classList.add("show"); clearTimeout(persist.t); persist.t = setTimeout(function () { tag.classList.remove("show"); }, 1200); }
+  }
+
+  /* ---------- tema ---------- */
+  var root = document.documentElement;
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("norrviken-theme", next); } catch (e) {}
+  });
+
+  /* ---------- facit-knapp (bara lärarversionen) ---------- */
+  var fb = document.getElementById("facitBtn");
+  if (fb) fb.addEventListener("click", function () {
+    var hidden = document.body.classList.toggle("hide-facit");
+    fb.textContent = hidden ? "Visa facit" : "Dölj facit";
+    fb.classList.toggle("on", hidden);
+  });
+
+  /* ---------- numrera frågor per del ---------- */
+  document.querySelectorAll("section.del").forEach(function (sec) {
+    var no = (sec.querySelector(".del-no") || {}).textContent || "";
+    var n = parseInt(no, 10);
+    sec.querySelectorAll(".qn").forEach(function (el, i) { el.textContent = (isNaN(n) ? "" : n + ".") + (i + 1); });
+  });
+
+  /* ---------- spara svar och bockar ---------- */
+  document.querySelectorAll("[data-k]").forEach(function (el) {
+    var k = el.getAttribute("data-k");
+    if (el.type === "checkbox") {
+      el.checked = !!store[k];
+      el.addEventListener("change", function () { store[k] = el.checked; persist(); progress(); });
+    } else {
+      if (store[k] != null) el.value = store[k];
+      el.addEventListener("input", function () { store[k] = el.value; persist(); grow(el); });
+      grow(el);
+    }
+  });
+  function grow(el) {
+    if (el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.height = Math.max(el.scrollHeight + 2, 70) + "px";
+  }
+
+  /* ---------- framsteg ---------- */
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".task input"));
+  function progress() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    var p = boxes.length ? Math.round(done / boxes.length * 100) : 0;
+    document.getElementById("meter").style.width = p + "%";
+    document.getElementById("pct").textContent = p + " %";
+    document.querySelectorAll("section.del").forEach(function (sec) {
+      var link = document.querySelector('.toc a[href="#' + sec.id + '"]');
+      if (!link) return;
+      var t = sec.querySelectorAll(".task input");
+      var all = t.length && Array.prototype.every.call(t, function (b) { return b.checked; });
+      link.classList.toggle("done", !!all);
+    });
+  }
+  progress();
+
+  /* ---------- kopiera-knappar ---------- */
+  document.querySelectorAll("pre.cli").forEach(function (pre) {
+    var b = document.createElement("button");
+    b.className = "copy";
+    b.type = "button";
+    b.textContent = "kopiera";
+    b.addEventListener("click", function () {
+      var txt = pre.querySelector("code").innerText;
+      var done = function () { b.textContent = "kopierat"; setTimeout(function () { b.textContent = "kopiera"; }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, done); else done();
+    });
+    pre.appendChild(b);
+  });
+
+  /* ---------- tona in vid scroll ---------- */
+  var reveal = document.querySelectorAll(".hero, .del-head, .q, .tasks, .tbl, .note, pre.cli, .facit, details.hint, .goal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -40px 0px" });
+    reveal.forEach(function (el) { el.classList.add("rv"); io.observe(el); });
+
+    var links = document.querySelectorAll(".toc a");
+    var io2 = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle("cur", a.getAttribute("href") === "#" + e.target.id); });
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    document.querySelectorAll("#start, section.del").forEach(function (s) { io2.observe(s); });
+  }
+
+  /* ---------- topologi ---------- */
+  var svg = document.getElementById("topo");
+  var NS = "http://www.w3.org/2000/svg";
+  function mk(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  var N = {
+    WEB:  { x: 935, y: 58,  t: "server", ip: "198.51.100.10", d: "En webbserver ute på \"internet\". Här ligger www.cykeldelar.test." },
+    ISP:  { x: 800, y: 58,  t: "router", ip: "203.0.113.1 / 198.51.100.1", d: "Internetleverantören. Vet ingenting om Norrvikens privata adresser." },
+    R1:   { x: 600, y: 175, t: "router", ip: "10.0.0.1, 203.0.113.2, .1 i varje VLAN", d: "Huvudroutern. Router-on-a-stick, DHCP, NAT och gästernas ACL." },
+    R2:   { x: 220, y: 175, t: "router", ip: "10.0.0.2 / 192.168.50.1", d: "Verkstadens router. DHCP för Kallhäll, skickar allt annat till R1." },
+    SW1:  { x: 600, y: 310, t: "switch", ip: "192.168.99.2 (VLAN 99)", d: "Butikens switch. Fyra VLAN, trunk upp till R1 och port security." },
+    SW2:  { x: 220, y: 310, t: "switch", ip: "192.168.50.2", d: "Verkstadens switch. Inga VLAN, bara VLAN 1." },
+    PC1:  { x: 400, y: 440, t: "pc", ip: "VLAN 10, DHCP", d: "Personal." },
+    PC2:  { x: 480, y: 440, t: "pc", ip: "VLAN 10, DHCP", d: "Personal." },
+    SRV1: { x: 560, y: 440, t: "server", ip: "192.168.10.10", d: "Intranät (HTTP) och DNS för hela företaget." },
+    PC3:  { x: 640, y: 440, t: "pc", ip: "VLAN 20, DHCP", d: "Kassa. Ska aldrig kunna nås av gäster." },
+    PC4:  { x: 720, y: 440, t: "pc", ip: "VLAN 20, DHCP", d: "Kassa." },
+    GAST: { x: 800, y: 440, t: "pc", ip: "VLAN 30, DHCP", d: "Kundernas dator. Får bara gå ut på internet." },
+    PC5:  { x: 160, y: 440, t: "pc", ip: "192.168.50.x, DHCP", d: "Verkstaden i Kallhäll." },
+    PC6:  { x: 280, y: 440, t: "pc", ip: "192.168.50.x, DHCP", d: "Verkstaden i Kallhäll." }
+  };
+  var LINKS = [
+    ["WEB", "ISP", "198.51.100.0/24"], ["ISP", "R1", "203.0.113.0/30"], ["R1", "R2", "10.0.0.0/30"],
+    ["R1", "SW1", "trunk", true], ["R2", "SW2"],
+    ["SW1", "PC1"], ["SW1", "PC2"], ["SW1", "SRV1"], ["SW1", "PC3"], ["SW1", "PC4"], ["SW1", "GAST"],
+    ["SW2", "PC5"], ["SW2", "PC6"]
+  ];
+  var zones = [
+    { x: 100, y: 118, w: 240, h: 380, t: "KALLHÄLL" },
+    { x: 355, y: 118, w: 495, h: 380, t: "JÄRFÄLLA" },
+    { x: 735, y: 4, w: 258, h: 106, t: "INTERNET" }
+  ];
+  zones.forEach(function (z) {
+    mk("rect", { x: z.x, y: z.y, width: z.w, height: z.h, rx: 14, class: "zone" });
+    var tx = mk("text", { x: z.x + 12, y: z.y + 20, class: "zlabel" });
+    tx.textContent = z.t;
+  });
+  LINKS.forEach(function (l) {
+    var a = N[l[0]], b = N[l[1]];
+    mk("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "link" + (l[3] ? " trunk" : "") });
+    if (l[2]) {
+      var t = mk("text", { x: (a.x + b.x) / 2 + (l[3] ? 10 : 0), y: (a.y + b.y) / 2 - 8, class: "llabel", "text-anchor": l[3] ? "start" : "middle" });
+      t.textContent = l[2];
+    }
+  });
+  var pktLayer = mk("g", {});
+  var info = document.getElementById("devinfo");
+  Object.keys(N).forEach(function (id) {
+    var n = N[id];
+    var g = mk("g", { class: "dev", transform: "translate(" + n.x + "," + n.y + ")", tabindex: "0" });
+    var labelY;
+    if (n.t === "router") {
+      mk("circle", { r: 24, class: "shape" }, g);
+      mk("path", { d: "M-12 -5h24m-5 -4l5 4-5 4M12 5h-24m5 -4l-5 4 5 4", class: "glyph" }, g);
+      labelY = 42;
+    } else if (n.t === "switch") {
+      mk("rect", { x: -32, y: -16, width: 64, height: 32, rx: 6, class: "shape" }, g);
+      mk("path", { d: "M-18 -5h36m-5 -4l5 4-5 4M18 5h-36m5 -4l-5 4 5 4", class: "glyph" }, g);
+      labelY = 34;
+    } else if (n.t === "server") {
+      mk("rect", { x: -14, y: -22, width: 28, height: 44, rx: 3, class: "shape" }, g);
+      mk("path", { d: "M-8 -12h16M-8 -4h16M-8 4h8", class: "glyph" }, g);
+      labelY = 38;
+    } else {
+      mk("rect", { x: -18, y: -15, width: 36, height: 24, rx: 3, class: "shape" }, g);
+      mk("path", { d: "M-8 16h16M0 9v7", class: "glyph" }, g);
+      labelY = 34;
+    }
+    var tx = mk("text", { y: labelY }, g);
+    tx.textContent = id === "WEB" ? "WEB-ISP" : id;
+    n.g = g;
+    function pick() {
+      document.querySelectorAll("#topo .dev").forEach(function (d) { d.classList.remove("sel"); });
+      g.classList.add("sel");
+      info.innerHTML = "<b>" + (id === "WEB" ? "WEB-ISP" : id) + "</b> &nbsp; <span class='mono' style='color:var(--soft)'>" + n.ip + "</span><br>" + n.d;
+    }
+    g.addEventListener("click", pick);
+    g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  });
+
+  var flows = [
+    { p: ["PC5", "SW2", "R2", "R1", "SW1", "SRV1"], c: "--teal", n: "Kallhäll till intranätet" },
+    { p: ["PC1", "SW1", "R1", "ISP", "WEB"], c: "--acc", n: "Personal ut på internet (NAT)" },
+    { p: ["PC3", "SW1", "R1", "SW1", "PC1"], c: "--ok", n: "Kassa till personal, via R1" },
+    { p: ["GAST", "SW1", "R1"], c: "--bad", n: "Gäst mot intranätet: stoppas", block: true }
+  ];
+  var legend = document.getElementById("legend");
+  flows.forEach(function (f) {
+    var s = document.createElement("span");
+    s.innerHTML = "<i style='background:var(" + f.c + ")'></i>" + f.n;
+    legend.appendChild(s);
+  });
+
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var running = !reduce, packets = [], fi = 0, last = performance.now(), spawnT = 1200;
+  var tb = document.getElementById("trafficBtn");
+  tb.textContent = running ? "Pausa trafiken" : "Starta trafiken";
+  tb.addEventListener("click", function () {
+    running = !running;
+    tb.textContent = running ? "Pausa trafiken" : "Starta trafiken";
+  });
+  function spawn() {
+    var f = flows[fi++ % flows.length];
+    var dot = mk("circle", { r: 7, class: "pkt" }, pktLayer);
+    dot.style.fill = "var(" + f.c + ")";
+    var a = N[f.p[0]];
+    dot.setAttribute("cx", a.x); dot.setAttribute("cy", a.y);
+    packets.push({ f: f, dot: dot, seg: 0, t: 0 });
+  }
+  function finish(pk) {
+    var end = N[pk.f.p[pk.f.p.length - 1]];
+    pk.dot.remove();
+    var el;
+    if (pk.f.block) {
+      el = mk("text", { x: end.x - 34, y: end.y - 20, class: "xmark" }, pktLayer);
+      el.textContent = "×";
+      el.style.fill = "var(--bad)";
+      setTimeout(function () { el.remove(); }, 1200);
+    } else {
+      el = mk("circle", { cx: end.x, cy: end.y, r: 14, class: "pulse" }, pktLayer);
+      el.style.stroke = "var(" + pk.f.c + ")";
+      setTimeout(function () { el.remove(); }, 900);
+    }
+  }
+  function frame(now) {
+    var dt = Math.min(now - last, 50);
+    last = now;
+    if (running) {
+      spawnT += dt;
+      if (spawnT > 1500) { spawnT = 0; spawn(); }
+      packets = packets.filter(function (pk) {
+        var a = N[pk.f.p[pk.seg]], b = N[pk.f.p[pk.seg + 1]];
+        var len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        pk.t += dt * 0.2 / len;
+        if (pk.t >= 1) {
+          pk.seg++;
+          pk.t = 0;
+          if (pk.seg >= pk.f.p.length - 1) { finish(pk); return false; }
+          a = N[pk.f.p[pk.seg]]; b = N[pk.f.p[pk.seg + 1]];
+        }
+        pk.dot.setAttribute("cx", a.x + (b.x - a.x) * pk.t);
+        pk.dot.setAttribute("cy", a.y + (b.y - a.y) * pk.t);
+        return true;
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
