@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jensen Komvux-labben</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("jensen-komvux-theme"); } catch (e) {}
+    if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --paper: #fbf9f4;
+    --ink: #1c1e21;
+    --soft: #5d6168;
+    --rule: #ddd6c8;
+    --acc: #c2410c;
+    --acc-soft: #fbe3d3;
+    --teal: #0f766e;
+    --teal-soft: #d6efea;
+    --ok: #3f7d20;
+    --ok-soft: #e2f0d6;
+    --bad: #be123c;
+    --code: #16181b;
+    --codeink: #d8dbe0;
+    --mark: #fff0a8;
+    --shadow: 0 1px 0 rgba(0,0,0,.03), 0 10px 28px -16px rgba(0,0,0,.22);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #121417;
+    --paper: #1a1d21;
+    --ink: #e8e5de;
+    --soft: #9aa0a8;
+    --rule: #2c3036;
+    --acc: #fb923c;
+    --acc-soft: #3a2517;
+    --teal: #5eead4;
+    --teal-soft: #13302b;
+    --ok: #9ad36b;
+    --ok-soft: #1e2c16;
+    --bad: #fb7185;
+    --code: #0b0c0e;
+    --codeink: #d8dbe0;
+    --mark: #4b3f10;
+    --shadow: none;
+    color-scheme: dark; } }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  [data-theme="dark"] {
+    --bg: #121417;
+    --paper: #1a1d21;
+    --ink: #e8e5de;
+    --soft: #9aa0a8;
+    --rule: #2c3036;
+    --acc: #fb923c;
+    --acc-soft: #3a2517;
+    --teal: #5eead4;
+    --teal-soft: #13302b;
+    --ok: #9ad36b;
+    --ok-soft: #1e2c16;
+    --bad: #fb7185;
+    --code: #0b0c0e;
+    --codeink: #d8dbe0;
+    --mark: #4b3f10;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.65 "IBM Plex Sans", system-ui, sans-serif;
+    transition: background .35s, color .35s;
+  }
+  a { color: var(--acc); }
+  code, kbd, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+  p code, li code, td code, .tt code, .qt code {
+    background: color-mix(in srgb, var(--acc) 10%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* ---------- topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .topbar-in { max-width: 1240px; margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 10px 20px; }
+  .logo { font-family: "IBM Plex Mono"; font-weight: 600; font-size: .88rem; white-space: nowrap; }
+  .logo span { color: var(--acc); }
+  .meter { flex: 1; height: 6px; background: var(--rule); border-radius: 9px; overflow: hidden; min-width: 60px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--acc); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .pct { font-family: "IBM Plex Mono"; font-size: .82rem; min-width: 3.2em; text-align: right; color: var(--soft); }
+  .btn {
+    font: 500 .85rem "IBM Plex Sans", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .2s, transform .1s, background .2s;
+  }
+  .btn:hover { border-color: var(--soft); }
+  .btn:active { transform: translateY(1px); }
+  .btn.on { background: var(--acc-soft); border-color: var(--acc); }
+  .theme-btn { width: 36px; padding: 7px 0; text-align: center; }
+  .theme-btn svg { width: 16px; height: 16px; vertical-align: -3px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ---------- layout ---------- */
+  .layout { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; padding: 30px 20px 90px; }
+  .toc { position: sticky; top: 76px; align-self: start; font-size: .88rem; }
+  .toc-h { font-family: "IBM Plex Mono"; font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--soft); margin: 0 0 8px 8px; }
+  .toc a { display: flex; gap: 8px; align-items: baseline; color: var(--soft); text-decoration: none; padding: 4px 8px; border-radius: 6px; transition: background .2s, color .2s; }
+  .toc a:hover { color: var(--ink); }
+  .toc a.cur { color: var(--ink); background: var(--paper); box-shadow: inset 2px 0 0 var(--acc); }
+  .toc a .n { font-family: "IBM Plex Mono"; color: var(--acc); font-size: .8rem; min-width: 1.6em; }
+  .toc a.done::after { content: "ok"; font-family: "IBM Plex Mono"; font-size: .7rem; margin-left: auto; color: var(--ok); }
+  main { max-width: 860px; min-width: 0; }
+  @media (max-width: 1020px) { .layout { grid-template-columns: 1fr; } .toc { display: none; } }
+
+  /* ---------- hero ---------- */
+  .kicker { font-family: "IBM Plex Mono"; font-size: .8rem; letter-spacing: .04em; color: var(--soft); }
+  .kicker b { color: var(--acc); font-weight: 600; }
+  h1 { font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.08; letter-spacing: -.025em; margin: 12px 0 18px; font-weight: 700; }
+  h1 em { font-style: normal; background: linear-gradient(transparent 62%, var(--mark) 62%); padding: 0 4px; }
+  .lede { font-size: 1.1rem; max-width: 62ch; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 26px 0; }
+  .facts div { padding: 12px 14px; border-left: 1px solid var(--rule); }
+  .facts div:first-child { border-left: 0; padding-left: 0; }
+  .facts dt { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--soft); }
+  .facts dd { margin: 2px 0 0; font-weight: 600; }
+  @media (max-width: 640px) { .facts { grid-template-columns: 1fr 1fr; } .facts div:nth-child(3) { border-left: 0; padding-left: 0; } }
+  .who { display: flex; gap: 12px; flex-wrap: wrap; }
+  .who label { font-size: .85rem; color: var(--soft); display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+
+  /* ---------- sektioner ---------- */
+  .del { margin-top: 70px; }
+  .del-head { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: end; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 20px; }
+  .del-no { font-family: "IBM Plex Mono"; font-weight: 600; font-size: 2.6rem; line-height: .9; color: var(--acc); }
+  .del-head h2 { margin: 0; font-size: 1.45rem; line-height: 1.25; letter-spacing: -.01em; }
+    .goal { color: var(--soft); margin-top: -6px; }
+  h3 { font-size: 1.05rem; margin: 30px 0 10px; }
+  h3::before { content: "// "; font-family: "IBM Plex Mono"; color: var(--acc); font-weight: 500; }
+
+  /* ---------- tasks ---------- */
+  .tasks { display: flex; flex-direction: column; gap: 2px; margin: 12px 0; }
+  .task { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .2s; }
+  .task:hover { background: var(--paper); }
+  .task input { position: absolute; opacity: 0; pointer-events: none; }
+  .task .box { width: 22px; height: 22px; margin-top: 3px; border: 2px solid var(--soft); border-radius: 6px; display: grid; place-items: center; transition: border-color .2s, background .2s, transform .15s; }
+  .task .box svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .task .box path { stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .35s ease .05s; }
+  .task input:checked + .box { background: var(--ok); border-color: var(--ok); transform: scale(1.06); }
+  .task input:checked + .box path { stroke-dashoffset: 0; }
+  .task input:focus-visible + .box { outline: 2px solid var(--acc); outline-offset: 2px; }
+  .task input:checked ~ .tt { color: var(--soft); }
+
+  /* ---------- frågor ---------- */
+  .q { display: grid; grid-template-columns: 52px 1fr; gap: 10px; padding: 16px 0; border-top: 1px dashed var(--rule); }
+  .qn { font-family: "IBM Plex Mono"; font-weight: 600; color: var(--acc); padding-top: 1px; }
+  .qt { font-weight: 500; }
+  textarea, input.blank, .who input {
+    width: 100%;
+    font: 16px/1.55 "IBM Plex Sans", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 9px 11px;
+    margin-top: 8px;
+    resize: vertical;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  textarea:focus, input.blank:focus, .who input:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+  input.blank { margin: 0; padding: 5px 7px; font-family: "IBM Plex Mono"; font-size: .85rem; min-width: 110px; }
+  .saved { font-family: "IBM Plex Mono"; font-size: .72rem; color: var(--ok); opacity: 0; transition: opacity .3s; }
+  .saved.show { opacity: 1; }
+
+  /* ---------- facit ---------- */
+  .facit {
+    margin-top: 10px;
+    border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent);
+    background: var(--ok-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: .96rem;
+  }
+  .facit-h { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; color: var(--ok); font-weight: 600; margin-bottom: 4px; }
+  .facit p { margin: 6px 0; }
+  .facit ul { margin: 6px 0; padding-left: 20px; }
+  .ans-inline { font-family: "IBM Plex Mono"; font-size: .85rem; color: var(--ok); font-weight: 600; }
+  body.hide-facit .facit { display: none; }
+  body.hide-facit .ans-inline { color: transparent; background: var(--rule); border-radius: 4px; }
+
+  /* ---------- notes ---------- */
+  .note { position: relative; background: var(--paper); border: 1px solid var(--rule); border-left: 4px solid var(--acc); border-radius: 4px 10px 10px 4px; padding: 14px 16px 12px; margin: 18px 0; box-shadow: var(--shadow); }
+  .note .hand { font-family: "Caveat", cursive; font-size: 1.35rem; color: var(--acc); line-height: 1; display: block; margin-bottom: 4px; transform: rotate(-1.5deg); transform-origin: left; }
+  .note p { margin: 4px 0; }
+  .note ul { margin: 6px 0; padding-left: 20px; }
+  .tnote { border-left-color: var(--teal); }
+  .tnote .hand { color: var(--teal); }
+
+  details.hint { margin: 10px 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); overflow: hidden; }
+  details.hint summary { cursor: pointer; padding: 9px 14px; font-weight: 500; color: var(--teal); list-style: none; display: flex; gap: 8px; align-items: center; }
+  details.hint summary::-webkit-details-marker { display: none; }
+  details.hint summary::before { content: "+"; font-family: "IBM Plex Mono"; font-weight: 600; transition: transform .25s; display: inline-block; }
+  details.hint[open] summary::before { transform: rotate(45deg); }
+  details.hint > div { padding: 0 14px 12px; animation: drop .3s ease; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- cli ---------- */
+  pre.cli {
+    position: relative;
+    background: var(--code);
+    color: var(--codeink);
+    font: 14px/1.6 "IBM Plex Mono", monospace;
+    padding: 16px 16px 14px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 10px 0;
+    border: 1px solid #25282d;
+  }
+  pre.cli .pr { color: #fdba74; }
+  pre.cli .cm { color: #7c8591; }
+  pre.cli .copy {
+    position: absolute; top: 8px; right: 8px;
+    font: 500 .72rem "IBM Plex Mono";
+    color: #aeb4bd; background: #23262b; border: 1px solid #33373d;
+    border-radius: 6px; padding: 3px 8px; cursor: pointer; opacity: 0; transition: opacity .2s;
+  }
+  pre.cli:hover .copy, pre.cli .copy:focus { opacity: 1; }
+
+  /* ---------- tabeller ---------- */
+  .tbl { overflow-x: auto; margin: 12px 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: "IBM Plex Mono"; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); font-weight: 500; background: color-mix(in srgb, var(--rule) 35%, transparent); }
+  tr:last-child td { border-bottom: 0; }
+  td.m { font-family: "IBM Plex Mono"; font-size: .84rem; white-space: nowrap; }
+
+  /* ---------- topologi ---------- */
+  .topo-wrap { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); }
+  #topo { width: 100%; height: auto; display: block; }
+  #topo .zone { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 6 5; }
+  #topo .zlabel { font: 500 12px "IBM Plex Mono"; fill: var(--soft); letter-spacing: .06em; }
+  #topo .link { stroke: var(--soft); stroke-width: 2; opacity: .55; }
+  #topo .link.wifi { stroke-dasharray: 3 6; opacity: .8; }
+  #topo .link.chan { stroke: var(--teal); stroke-width: 6; opacity: .75; }
+  #topo .link.trunk { stroke: var(--acc); stroke-width: 3.5; opacity: .8; }
+  #topo .llabel { font: 11px "IBM Plex Mono"; fill: var(--soft); }
+  #topo .dev { cursor: pointer; }
+  #topo .dev .shape { fill: var(--paper); stroke: var(--ink); stroke-width: 2; transition: fill .2s; }
+  #topo .dev .glyph { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #topo .dev text { font: 600 12px "IBM Plex Mono"; fill: var(--ink); text-anchor: middle; }
+  #topo .dev:hover .shape, #topo .dev.sel .shape { fill: var(--acc-soft); }
+  #topo .pkt { stroke: var(--paper); stroke-width: 2; }
+  #topo .pulse { fill: none; stroke-width: 2; animation: pulse .8s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+  #topo .xmark { font: 700 26px "IBM Plex Sans"; text-anchor: middle; animation: fadeout 1.1s ease forwards; }
+  @keyframes pulse { from { transform: scale(.4); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
+  @keyframes fadeout { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+  .topo-foot { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; margin-top: 8px; font-size: .82rem; color: var(--soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .legend span { display: inline-flex; gap: 6px; align-items: center; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .devinfo { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bg); font-size: .92rem; min-height: 46px; }
+  .devinfo b { font-family: "IBM Plex Mono"; }
+
+  /* ---------- reveal ---------- */
+  .rv { transform: translateY(16px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+
+  footer { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--soft); font-size: .85rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+  @media print {
+    :root, [data-theme="dark"] { --bg: #fff; --paper: #fff; --ink: #000; --soft: #444; --rule: #bbb; --code: #f3f3f3; --codeink: #000; }
+    .topbar, .toc, .no-print, pre.cli .copy { display: none !important; }
+    .layout { display: block; padding: 0; }
+    .rv { opacity: 1 !important; transform: none !important; }
+    .del { break-inside: auto; margin-top: 30px; }
+    .q { break-inside: avoid; }
+    details.hint { display: none; }
+  }
+</style>
+</head>
+<body data-v="elev">
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="logo">jensen<span>/</span>komvux</div>
+    <div class="meter" title="Hur många uppgifter du bockat av"><i id="meter"></i></div>
+    <div class="pct" id="pct">0 %</div>
+    
+    <button class="btn theme-btn no-print" id="themeBtn" aria-label="Byt mellan ljust och mörkt läge">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="toc" id="toc">
+    <div class="toc-h">Innehåll</div>
+    <a href="#start"><span class="n">00</span>Läs först</a>
+    <a href="#del1"><span class="n">01</span>Uppvärmning: STP</a>
+    <a href="#del2"><span class="n">02</span>Bygg campus</a>
+    <a href="#del3"><span class="n">03</span>IP-planen</a>
+    <a href="#del4"><span class="n">04</span>Grundkonfig</a>
+    <a href="#del5"><span class="n">05</span>VLAN och EtherChannel</a>
+    <a href="#del6"><span class="n">06</span>Routing i switchen</a>
+    <a href="#del7"><span class="n">07</span>Redundans: HSRP</a>
+    <a href="#del8"><span class="n">08</span>OSPF och NAT</a>
+    <a href="#del9"><span class="n">09</span>IPv6</a>
+    <a href="#del10"><span class="n">10</span>Företags-WLAN</a>
+    <a href="#del11"><span class="n">11</span>Loggar och tid</a>
+    <a href="#del12"><span class="n">12</span>Smarta skolan</a>
+    <a href="#del13"><span class="n">13</span>Felsökning</a>
+    <a href="#del14"><span class="n">14</span>Nya våningen</a>
+    <a href="#del15"><span class="n">15</span>Extra</a>
+  </nav>
+
+  <main>
+    <header class="hero" id="start">
+      <div class="kicker">Dator- och nätverkskommunikation 3 &nbsp;/&nbsp; Cisco Packet Tracer</div>
+      <h1>Jensen Komvux får ett nät som <em>inte går ner</em></h1>
+      <p class="lede">Tänk dig att hela skolans nät dör en onsdag förmiddag. En enda switch i serverrummet går sönder och alla studerande sitter utan wifi mitt i en tentavecka. Det får aldrig hända. Du ska bygga ett campusnät där allt viktigt finns i två exemplar, där personalen loggar in på wifi med eget konto, och där skolan vet exakt vad som hände och när.</p>
+
+      <dl class="facts">
+        <div><dt>Form</dt><dd>Enskilt eller i par</dd></div>
+        <div><dt>Program</dt><dd>Packet Tracer 8.2+</dd></div>
+        <div><dt>Nivå</dt><dd>Dator- och kommunikationsteknik 3</dd></div>
+      </dl>
+
+      
+      <div class="who no-print">
+        <label>Namn<input data-k="namn" placeholder="För- och efternamn"></label>
+        <label>Klass<input data-k="klass" placeholder="t.ex. TE23"></label>
+      </div>
+      <p style="font-size:.85rem;color:var(--soft);margin-top:10px">Dina svar och bockar sparas bara i den här webbläsaren, för din egen skull. Inget ska lämnas in. Det viktiga är att nätet fungerar i din Packet Tracer-fil. <span class="saved" id="savedTag">sparat</span></p>
+      
+
+      
+
+      <div class="note">
+        <span class="hand">innan du börjar</span>
+        <ul>
+          <li>Det här är en längre labb än Norrviken. Räkna med att hålla på en hel dag.</li>
+          <li><b>Spara ofta</b>, och spara en kopia med nytt namn efter varje del som fungerar. Då kan du alltid gå tillbaka.</li>
+          <li>Döp filen <code>Efternamn_Fornamn_JensenKomvux.pkt</code>.</li>
+          <li>Nytt den här gången: <b>layer 3-switchar</b>. De kan både switcha och routa. Inga subinterface på någon router.</li>
+          <li>Fastnar du: läs ledtråden, testa med <code>show</code>-kommandon, fråga bänkgrannen, sedan mig.</li>
+          <li>Inget ska lämnas in. Jag går runt och du visar mig ditt nät när du kommit en bit.</li>
+        </ul>
+      </div>
+
+      <h3>Så här ser nätet ut när du är klar</h3>
+      <div class="topo-wrap">
+        <svg id="topo" viewBox="0 0 1000 510" role="img" aria-label="Topologi för Jensen Komvux"></svg>
+        <div class="topo-foot">
+          <div class="legend" id="legend"></div>
+          <button class="btn no-print" id="trafficBtn">Pausa trafiken</button>
+        </div>
+        <div class="devinfo" id="devinfo">Klicka på en enhet för att se vad den gör.</div>
+      </div>
+    </header>
+
+    <!-- ================= DEL 1 ================= -->
+    <section class="del" id="del1">
+      <div class="del-head"><div class="del-no">01</div><h2>Uppvärmning: tre switchar i en triangel</h2></div>
+      <p class="goal">Innan campus. Två vägar mellan switchar är bra för redundansen men farligt för loopar. Här ser du hur Spanning Tree löser det. Gör det i en egen fil.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t1"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa en ny fil <code>STP-test.pkt</code>. Lägg ut tre <b>2960</b> och döp dem till S1, S2 och S3.</span></label>
+        <label class="task"><input type="checkbox" data-k="t2"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Koppla dem i en triangel: S1 G0/1 ↔ S2 G0/1, S2 G0/2 ↔ S3 G0/1, S3 G0/2 ↔ S1 G0/2. Lägg en PC på S2 Fa0/1 och en på S3 Fa0/1 (192.168.1.2 och .3, /24).</span></label>
+        <label class="task"><input type="checkbox" data-k="t3"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Vänta en minut. En av länkarna får en orange prick som aldrig blir grön. Notera var den sitter.</span></label>
+        <label class="task"><input type="checkbox" data-k="t4"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show spanning-tree</code> på alla tre. Hitta raden <i>This bridge is the root</i> och kolumnen <b>Role</b> och <b>Sts</b> för varje port.</span></label>
+        <label class="task"><input type="checkbox" data-k="t5"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga mellan PC:arna. Byt till Simulation och följ pingen. Vilken väg tar den?</span></label>
+        <label class="task"><input type="checkbox" data-k="t6"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dra ur kabeln mellan root-switchen och en av de andra. Kör <code>show spanning-tree</code> igen och pinga. Koppla tillbaka kabeln.</span></label>
+        <label class="task"><input type="checkbox" data-k="t7"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör S3 till root med <code>spanning-tree vlan 1 priority 4096</code>. Titta på vilken port som blockeras nu.</span></label>
+        <label class="task"><input type="checkbox" data-k="t8"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara. Nu börjar det riktiga jobbet i en ny fil.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: vem blir root?</summary><div>
+        <p>Switchen med lägst <b>Bridge ID</b> vinner. Bridge ID är prioritet (standard 32768 + VLAN-nummer) plus MAC-adress. Är prioriteten lika vinner lägst MAC-adress, alltså i princip slumpen.</p>
+      </div></details>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vilken switch blev root från början, och på vilken switch och port hamnade den blockerade porten (Altn/BLK)?</div><textarea data-k="q1" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vad hände när du drog ur kabeln från root, och hur lång tid tog det innan pingen fungerade igen?</div><textarea data-k="q2" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 2 ================= -->
+    <section class="del" id="del2">
+      <div class="del-head"><div class="del-no">02</div><h2>Bygg campus</h2></div>
+      <p class="goal">Skolan har två våningsplan och ett serverrum. I serverrummet står två kärnswitchar som backar upp varandra. Varje våningsswitch har en kabel till båda.</p>
+
+      <h3>Enheter</h3>
+      <div class="tbl"><table>
+        <tr><th>Namn</th><th>Modell i Packet Tracer</th><th>Var</th><th>Roll</th></tr>
+        <tr><td class="m">R-EDGE</td><td>2911</td><td>Serverrum</td><td>Kantrouter mot internet, NAT</td></tr>
+        <tr><td class="m">ISP</td><td>2911</td><td>Internet</td><td>Internetleverantören</td></tr>
+        <tr><td class="m">DSW1, DSW2</td><td>3560-24PS</td><td>Serverrum</td><td>Kärnswitchar (layer 3, PoE)</td></tr>
+        <tr><td class="m">ASW1</td><td>2960-24TT</td><td>Plan 1</td><td>Personalens switch</td></tr>
+        <tr><td class="m">ASW2</td><td>2960-24TT</td><td>Plan 2</td><td>Datasalens switch</td></tr>
+        <tr><td class="m">WLC</td><td>WLC-2504</td><td>Serverrum</td><td>Styr alla access points</td></tr>
+        <tr><td class="m">LAP1, LAP2</td><td>LAP-PT eller 3702i</td><td>Plan 1 och 2</td><td>Access points som styrs av WLC</td></tr>
+        <tr><td class="m">SRV</td><td>Server-PT</td><td>Serverrum</td><td>DHCP, DNS, RADIUS, NTP, Syslog, IoT</td></tr>
+        <tr><td class="m">PC-L1, PC-L2</td><td>PC-PT</td><td>Plan 1</td><td>Lärare</td></tr>
+        <tr><td class="m">SKRIVARE</td><td>Printer-PT</td><td>Plan 1</td><td>Personalrummets skrivare</td></tr>
+        <tr><td class="m">PC-E1, PC-E2</td><td>PC-PT</td><td>Plan 2</td><td>Elevdatorer i datasalen</td></tr>
+        <tr><td class="m">WEB</td><td>Server-PT</td><td>Internet</td><td>En webbsida "ute på internet"</td></tr>
+      </table></div>
+
+      <h3>Kopplingar</h3>
+      <div class="tbl"><table>
+        <tr><th>Från</th><th>Till</th><th>Varför</th></tr>
+        <tr><td class="m">DSW1 Fa0/21, Fa0/22</td><td class="m">DSW2 Fa0/21, Fa0/22</td><td>Två kablar som ska bli en EtherChannel</td></tr>
+        <tr><td class="m">ASW1 G0/1</td><td class="m">DSW1 Fa0/1</td><td>Plan 1 upp till kärna 1</td></tr>
+        <tr><td class="m">ASW1 G0/2</td><td class="m">DSW2 Fa0/1</td><td>Plan 1 upp till kärna 2</td></tr>
+        <tr><td class="m">ASW2 G0/1</td><td class="m">DSW1 Fa0/2</td><td>Plan 2 upp till kärna 1</td></tr>
+        <tr><td class="m">ASW2 G0/2</td><td class="m">DSW2 Fa0/2</td><td>Plan 2 upp till kärna 2</td></tr>
+        <tr><td class="m">DSW1 G0/1</td><td class="m">R-EDGE G0/0</td><td>Routad länk</td></tr>
+        <tr><td class="m">DSW2 G0/1</td><td class="m">R-EDGE G0/1</td><td>Routad länk</td></tr>
+        <tr><td class="m">R-EDGE G0/2</td><td class="m">ISP G0/1</td><td>Mot internet</td></tr>
+        <tr><td class="m">ISP G0/0</td><td class="m">WEB Fa0</td><td>Internet</td></tr>
+        <tr><td class="m">DSW1 Fa0/10</td><td class="m">LAP1</td><td>PoE, ström via kabeln</td></tr>
+        <tr><td class="m">DSW2 Fa0/10</td><td class="m">LAP2</td><td>PoE, ström via kabeln</td></tr>
+        <tr><td class="m">DSW1 Fa0/11</td><td class="m">WLC Gig 1</td><td>Trunk till WLC</td></tr>
+        <tr><td class="m">DSW1 Fa0/12</td><td class="m">SRV Fa0</td><td>Servern</td></tr>
+        <tr><td class="m">ASW1 Fa0/1, Fa0/2, Fa0/5</td><td class="m">PC-L1, PC-L2, SKRIVARE</td><td></td></tr>
+        <tr><td class="m">ASW2 Fa0/1, Fa0/2</td><td class="m">PC-E1, PC-E2</td><td></td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t9"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Placera ut alla enheter och döp dem exakt som i tabellen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t10"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dra alla kablar enligt kopplingstabellen. Välj kabeltyp själv.</span></label>
+        <label class="task"><input type="checkbox" data-k="t11"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Rita tre områden: <i>Plan 1</i>, <i>Serverrum</i>, <i>Plan 2</i>, och ett för <i>Internet</i>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t12"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kontrollera att LAP1 och LAP2 har ström (lampan lyser i Physical-vyn). Om inte: sätt i strömadaptern i Physical-vyn, eller kontrollera att du valde 3560-<b>24PS</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t13"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Räkna de orange prickarna på uplinks efter en minut. Skriv ner var de sitter. Det är Spanning Tree igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t14"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Varför ska LAP:arna kopplas till DSW1 och DSW2 och inte till våningsswitcharna ASW1 och ASW2?</div><textarea data-k="q3" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 3 ================= -->
+    <section class="del" id="del3">
+      <div class="del-head"><div class="del-no">03</div><h2>IP-planen</h2></div>
+      <p class="goal">Skolan använder <code>10.10.X.0/24</code> där X är VLAN-numret. Varje VLAN har tre adresser för kärnan: <b>.1</b> är den virtuella gatewayen (HSRP), <b>.2</b> är DSW1 och <b>.3</b> är DSW2. Fyll i det som saknas.</p>
+
+      <div class="tbl"><table>
+        <tr><th>VLAN</th><th>Namn</th><th>Nät</th><th>Gateway (virtuell)</th><th>DSW1</th><th>DSW2</th><th>Aktiv i HSRP</th></tr>
+        <tr><td class="m">10</td><td class="m">PERSONAL</td><td class="m">10.10.10.0/24</td><td class="m">10.10.10.1</td><td class="m">10.10.10.2</td><td class="m">10.10.10.3</td><td class="m">DSW1</td></tr>
+        <tr><td class="m">20</td><td class="m">ELEV-LAB</td><td><input class="blank" data-k="b1" aria-label="Ditt svar"></td><td><input class="blank" data-k="b2" aria-label="Ditt svar"></td><td><input class="blank" data-k="b3" aria-label="Ditt svar"></td><td><input class="blank" data-k="b4" aria-label="Ditt svar"></td><td class="m">DSW2</td></tr>
+        <tr><td class="m">30</td><td class="m">ELEV-WIFI</td><td><input class="blank" data-k="b5" aria-label="Ditt svar"></td><td><input class="blank" data-k="b6" aria-label="Ditt svar"></td><td><input class="blank" data-k="b7" aria-label="Ditt svar"></td><td><input class="blank" data-k="b8" aria-label="Ditt svar"></td><td class="m">DSW2</td></tr>
+        <tr><td class="m">40</td><td class="m">IOT</td><td><input class="blank" data-k="b9" aria-label="Ditt svar"></td><td><input class="blank" data-k="b10" aria-label="Ditt svar"></td><td><input class="blank" data-k="b11" aria-label="Ditt svar"></td><td><input class="blank" data-k="b12" aria-label="Ditt svar"></td><td class="m">DSW2</td></tr>
+        <tr><td class="m">50</td><td class="m">SERVER</td><td><input class="blank" data-k="b13" aria-label="Ditt svar"></td><td><input class="blank" data-k="b14" aria-label="Ditt svar"></td><td><input class="blank" data-k="b15" aria-label="Ditt svar"></td><td><input class="blank" data-k="b16" aria-label="Ditt svar"></td><td class="m">DSW1</td></tr>
+        <tr><td class="m">60</td><td class="m">WLAN</td><td><input class="blank" data-k="b17" aria-label="Ditt svar"></td><td><input class="blank" data-k="b18" aria-label="Ditt svar"></td><td><input class="blank" data-k="b19" aria-label="Ditt svar"></td><td><input class="blank" data-k="b20" aria-label="Ditt svar"></td><td class="m">DSW1</td></tr>
+        <tr><td class="m">99</td><td class="m">MGMT</td><td><input class="blank" data-k="b21" aria-label="Ditt svar"></td><td><input class="blank" data-k="b22" aria-label="Ditt svar"></td><td><input class="blank" data-k="b23" aria-label="Ditt svar"></td><td><input class="blank" data-k="b24" aria-label="Ditt svar"></td><td class="m">DSW1</td></tr>
+      </table></div>
+
+      <h3>Routade länkar</h3>
+      <div class="tbl"><table>
+        <tr><th>Länk</th><th>Nät</th><th>Ena sidan</th><th>Andra sidan</th></tr>
+        <tr><td class="m">R-EDGE G0/0 ↔ DSW1 G0/1</td><td class="m">10.1.1.0/30</td><td class="m">R-EDGE .1</td><td><input class="blank" data-k="b25" aria-label="Ditt svar"></td></tr>
+        <tr><td class="m">R-EDGE G0/1 ↔ DSW2 G0/1</td><td class="m">10.1.1.4/30</td><td><input class="blank" data-k="b26" aria-label="Ditt svar"></td><td><input class="blank" data-k="b27" aria-label="Ditt svar"></td></tr>
+        <tr><td class="m">R-EDGE G0/2 ↔ ISP G0/1</td><td class="m">203.0.113.4/30</td><td><input class="blank" data-k="b28" aria-label="Ditt svar"></td><td><input class="blank" data-k="b29" aria-label="Ditt svar"></td></tr>
+        <tr><td class="m">ISP G0/0 ↔ WEB</td><td class="m">198.51.100.0/24</td><td class="m">ISP .1</td><td class="m">WEB .20</td></tr>
+      </table></div>
+
+      <h3>Fasta adresser</h3>
+      <div class="tbl"><table>
+        <tr><th>Enhet</th><th>Adress</th><th>Gateway</th></tr>
+        <tr><td class="m">SRV</td><td class="m">10.10.50.10/24</td><td class="m">10.10.50.1</td></tr>
+        <tr><td class="m">WLC (management)</td><td class="m">10.10.60.5/24</td><td class="m">10.10.60.1</td></tr>
+        <tr><td class="m">ASW1 (VLAN 99)</td><td class="m">10.10.99.11/24</td><td class="m">10.10.99.1</td></tr>
+        <tr><td class="m">ASW2 (VLAN 99)</td><td class="m">10.10.99.12/24</td><td class="m">10.10.99.1</td></tr>
+        <tr><td class="m">WEB</td><td class="m">198.51.100.20/24</td><td class="m">198.51.100.1</td></tr>
+        <tr><td class="m">Alla PC, skrivare, LAP, IoT</td><td>DHCP från SRV</td><td>DHCP</td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t15"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Fyll i tabellerna ovan.</span></label>
+        <label class="task"><input type="checkbox" data-k="t16"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv in IP-planen som en <b>Note</b> i Packet Tracer-filen, bredvid serverrummet. Den behöver du hela dagen.</span></label>
+      </div>
+    </section>
+
+    <!-- ================= DEL 4 ================= -->
+    <section class="del" id="del4">
+      <div class="del-head"><div class="del-no">04</div><h2>Grundkonfig och SSH</h2></div>
+      <p class="goal">Samma grund som i Norrviken, men nu på sex enheter: R-EDGE, ISP, DSW1, DSW2, ASW1 och ASW2. Gör det snabbt och likadant överallt.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t17"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Hostname, <code>no ip domain-lookup</code>, enable secret <code>class</code>, konsollösenord <code>cisco</code> med login, <code>service password-encryption</code> och en banner.</span></label>
+        <label class="task"><input type="checkbox" data-k="t18"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R-EDGE, DSW1 och DSW2: domännamn <code>jensen.local</code>, användaren <code>admin</code> med secret <code>Jensen2026!</code>, RSA-nycklar 1024 bitar, SSH version 2, och VTY som bara tar SSH med lokala användare.</span></label>
+        <label class="task"><input type="checkbox" data-k="t19"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv ett tips till dig själv: skriv konfigurationen i Anteckningar först och klistra in den. Då går enhet två till sex fort.</span></label>
+        <label class="task"><input type="checkbox" data-k="t20"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara konfigurationen på alla sex.</span></label>
+      </div>
+
+      
+    </section>
+
+    <!-- ================= DEL 5 ================= -->
+    <section class="del" id="del5">
+      <div class="del-head"><div class="del-no">05</div><h2>VLAN, trunkar och EtherChannel</h2></div>
+      <p class="goal">Två kablar mellan kärnswitcharna ska fungera som en enda, tjockare länk. Om en kabel går sönder ska den andra ta över utan att Spanning Tree märker något.</p>
+
+      <h3>VLAN</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t21"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1 och DSW2: skapa VLAN 10, 20, 30, 40, 50, 60 och 99 med namnen från IP-planen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t22"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På ASW1 och ASW2: skapa VLAN 10, 20, 40 och 99.</span></label>
+      </div>
+
+      <h3>Trunkar</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t23"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1 och DSW2: gör Fa0/1 och Fa0/2 till trunkar. På 3560 måste du först skriva <code>switchport trunk encapsulation dot1q</code>, annars vägrar den.</span></label>
+        <label class="task"><input type="checkbox" data-k="t24"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På ASW1 och ASW2: gör G0/1 och G0/2 till trunkar.</span></label>
+        <label class="task"><input type="checkbox" data-k="t25"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kontrollera med <code>show interfaces trunk</code> på alla fyra.</span></label>
+      </div>
+
+      <h3>EtherChannel</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t26"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1: markera Fa0/21-22, gör dem till trunk, och lägg dem i <code>channel-group 1 mode active</code> (LACP).</span></label>
+        <label class="task"><input type="checkbox" data-k="t27"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör samma sak på DSW2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t28"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gå in på <code>interface port-channel 1</code> på båda och gör den till trunk.</span></label>
+        <label class="task"><input type="checkbox" data-k="t29"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show etherchannel summary</code>. Du ska se <b>Po1(SU)</b> och två portar med <b>(P)</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t30"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dra ur en av kablarna mellan DSW1 och DSW2. Kör <code>show etherchannel summary</code> igen. Koppla tillbaka.</span></label>
+      </div>
+
+      <h3>Accessportar</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t31"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">ASW1: Fa0/1, Fa0/2 och Fa0/5 i VLAN 10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t32"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">ASW2: Fa0/1 och Fa0/2 i VLAN 20.</span></label>
+        <label class="task"><input type="checkbox" data-k="t33"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1: Fa0/10 (LAP1) i VLAN 60 och Fa0/12 (SRV) i VLAN 50. DSW2: Fa0/10 (LAP2) i VLAN 60.</span></label>
+        <label class="task"><input type="checkbox" data-k="t34"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1 Fa0/11 (WLC): trunk med native VLAN 60 och bara VLAN 10, 30 och 60 tillåtna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t35"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vad hände i <code>show etherchannel summary</code> när du drog ur en kabel? Tappade pingen någon gång?</div><textarea data-k="q4" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 6 ================= -->
+    <section class="del" id="del6">
+      <div class="del-head"><div class="del-no">06</div><h2>Routing i switchen och DHCP från servern</h2></div>
+      <p class="goal">I Norrviken routade R1 mellan VLAN med subinterface. Här gör kärnswitcharna det själva med <b>SVI</b> (Switch Virtual Interface). DHCP ligger på en riktig server i ett annat VLAN.</p>
+
+      <h3>SVI</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t36"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1 och DSW2: slå på routing med <code>ip routing</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t37"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa <code>interface vlan 10</code>, 20, 30, 40, 50, 60 och 99 på båda. DSW1 får .2 och DSW2 får .3 i varje nät. Kom ihåg <code>no shutdown</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t38"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På ASW1 och ASW2: IP på <code>interface vlan 99</code> och <code>ip default-gateway 10.10.99.1</code>. (Gatewayen .1 finns inte förrän del 7. Tillfälligt kan du peka på 10.10.99.2.)</span></label>
+        <label class="task"><input type="checkbox" data-k="t39"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ip interface brief</code> på DSW1. Alla VLAN-interface ska vara up/up.</span></label>
+      </div>
+
+      <h3>DHCP på servern</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t40"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV: fast adress 10.10.50.10/24, gateway 10.10.50.1 (tillfälligt 10.10.50.2), DNS 10.10.50.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t41"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV → Services → DHCP: skapa en pool per VLAN (10, 20, 30, 40, 60). Default gateway är .1, DNS 10.10.50.10, första adress .21, mask 255.255.255.0. Klicka <b>Add</b> för varje.</span></label>
+        <label class="task"><input type="checkbox" data-k="t42"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">I poolen för VLAN 60: fyll i <b>WLC Address</b> 10.10.60.5. Det är så access points hittar sin controller.</span></label>
+        <label class="task"><input type="checkbox" data-k="t43"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ändra standardpoolen <code>serverPool</code> så att den ligger i VLAN 50 (gateway 10.10.50.1, start 10.10.50.100). Den går inte att ta bort.</span></label>
+        <label class="task"><input type="checkbox" data-k="t44"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Slå på DHCP-tjänsten (On).</span></label>
+      </div>
+
+      <h3>DHCP relay</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t45"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ställ PC-L1 på DHCP. Den får ingen adress. Varför inte?</span></label>
+        <label class="task"><input type="checkbox" data-k="t46"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1 och DSW2: lägg <code>ip helper-address 10.10.50.10</code> på VLAN 10, 20, 30, 40 och 60.</span></label>
+        <label class="task"><input type="checkbox" data-k="t47"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ställ PC-L1, PC-L2, SKRIVARE, PC-E1 och PC-E2 på DHCP. Kontrollera med <code>ipconfig</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t48"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Simulation: filtrera på DHCP och kör <code>ipconfig /renew</code> på PC-E1. Klicka på paketet mellan DSW och SRV och titta på IP-adresserna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t49"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga PC-L1 → PC-E1 och PC-L1 → SRV.</span></label>
+        <label class="task"><input type="checkbox" data-k="t50"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      <details class="hint"><summary>Ledtråd: varför behövs helper-address?</summary><div>
+        <p>DHCP Discover är en broadcast. Broadcast stannar i sitt eget VLAN, och servern står i VLAN 50. <code>ip helper-address</code> gör att switchen fångar broadcasten och skickar den vidare som unicast till servern.</p>
+      </div></details>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">I simuleringen: vilken käll-IP hade DHCP-paketet på väg från switchen till SRV? Hur vet servern vilken pool den ska ta adressen från?</div><textarea data-k="q5" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 7 ================= -->
+    <section class="del" id="del7">
+      <div class="del-head"><div class="del-no">07</div><h2>Redundans: HSRP och Spanning Tree</h2></div>
+      <p class="goal">Datorerna har bara en gateway. Om den switchen dör ska den andra ta över adressen direkt. Det är HSRP. Samtidigt ska Spanning Tree skicka trafiken till samma switch som är aktiv, annars blir vägen onödigt lång.</p>
+
+      <h3>HSRP</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t51"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På varje VLAN-interface på DSW1 och DSW2: <code>standby version 2</code> och <code>standby [VLAN] ip 10.10.X.1</code>. Använd VLAN-numret som gruppnummer.</span></label>
+        <label class="task"><input type="checkbox" data-k="t52"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1 ska vara aktiv för VLAN 10, 50, 60 och 99: <code>standby [grupp] priority 150</code> och <code>standby [grupp] preempt</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t53"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW2 ska vara aktiv för VLAN 20, 30 och 40, på samma sätt.</span></label>
+        <label class="task"><input type="checkbox" data-k="t54"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show standby brief</code> på båda. Kolla kolumnen <b>State</b>: Active eller Standby.</span></label>
+        <label class="task"><input type="checkbox" data-k="t55"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ändra gateway på SRV till 10.10.50.1 och på ASW1/ASW2 till 10.10.99.1 om du pekade på .2 tidigare.</span></label>
+      </div>
+
+      <h3>Spanning Tree i samma riktning</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t56"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1: <code>spanning-tree vlan 10,50,60,99 root primary</code> och <code>spanning-tree vlan 20,30,40 root secondary</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t57"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW2: tvärtom.</span></label>
+        <label class="task"><input type="checkbox" data-k="t58"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show spanning-tree vlan 10</code> och <code>show spanning-tree vlan 20</code> på ASW1. Vilken uplink är blockerad i vilket VLAN?</span></label>
+      </div>
+
+      <h3>Testa redundansen</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t59"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>ping -t 10.10.50.10</code> på PC-L1 (fortsätter tills du trycker Ctrl+C).</span></label>
+        <label class="task"><input type="checkbox" data-k="t60"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1: <code>interface vlan 10</code> och <code>shutdown</code>. Titta på pingen och kör <code>show standby brief</code> på DSW2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t61"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör <code>no shutdown</code> igen. Tar DSW1 tillbaka rollen som aktiv?</span></label>
+        <label class="task"><input type="checkbox" data-k="t62"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Hur många pingar tappades när VLAN 10 stängdes på DSW1? Vad stod det i <code>show standby brief</code> på DSW2?</div><textarea data-k="q6" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Varför ska root bridge och HSRP-aktiv vara samma switch i varje VLAN?</div><textarea data-k="q7" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 8 ================= -->
+    <section class="del" id="del8">
+      <div class="del-head"><div class="del-no">08</div><h2>OSPF och NAT: ut på internet</h2></div>
+      <p class="goal">Kärnswitcharna och R-EDGE ska prata OSPF med varandra. R-EDGE berättar för dem att det är den som leder ut på internet.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t63"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1: G0/1 blir en routad port med <code>no switchport</code> och 10.1.1.2/30. DSW2: G0/1 med 10.1.1.6/30.</span></label>
+        <label class="task"><input type="checkbox" data-k="t64"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R-EDGE: IP på G0/0, G0/1 och G0/2 enligt IP-planen. ISP: G0/1 och G0/0. WEB: 198.51.100.20/24, gateway .1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t65"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">OSPF process 1, area 0 på DSW1 (router-id 1.1.1.1), DSW2 (2.2.2.2) och R-EDGE (3.3.3.3). Annonsera länknäten och alla 10.10-nät.</span></label>
+        <label class="task"><input type="checkbox" data-k="t66"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På DSW1 och DSW2: gör alla interface passiva med <code>passive-interface default</code>, och öppna bara G0/1 med <code>no passive-interface g0/1</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t67"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R-EDGE: default route mot ISP och <code>default-information originate</code> i OSPF.</span></label>
+        <label class="task"><input type="checkbox" data-k="t68"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">R-EDGE: NAT overload. G0/0 och G0/1 inside, G0/2 outside, ACL 1 som tillåter 10.10.0.0/16.</span></label>
+        <label class="task"><input type="checkbox" data-k="t69"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ip ospf neighbor</code> på R-EDGE. Två grannar ska vara FULL.</span></label>
+        <label class="task"><input type="checkbox" data-k="t70"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ip route</code> på DSW1. Hitta raden med <b>O*E2</b>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t71"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV → DNS: lägg till <code>www.bibliotek.test</code> → 198.51.100.20 och <code>intranat.jensen.local</code> → 10.10.50.10. Slå på DNS och HTTP.</span></label>
+        <label class="task"><input type="checkbox" data-k="t72"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC-E1: öppna <code>http://www.bibliotek.test</code> och kör <code>tracert 198.51.100.20</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t73"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC-L1: samma <code>tracert</code>. Jämför vägen med PC-E1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t74"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vilken väg tog <code>tracert</code> från PC-E1, och vilken från PC-L1? Varför skiljer de sig?</div><textarea data-k="q8" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 9 ================= -->
+    <section class="del" id="del9">
+      <div class="del-head"><div class="del-no">09</div><h2>IPv6 i kärnan</h2></div>
+      <p class="goal">IPv4-adresserna tar slut i världen. Skolan börjar med IPv6 i personal- och elevnätet. Datorerna ska få adress helt själva, utan DHCP.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t75"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1: kör <code>sdm prefer dual-ipv4-and-ipv6 default</code>, spara och kör <code>reload</code>. En 3560 kan inte IPv6 innan den här inställningen. Titta på pingen från PC-L1 medan DSW1 startar om. HSRP räddar dig.</span></label>
+        <label class="task"><input type="checkbox" data-k="t76"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1: <code>ipv6 unicast-routing</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t77"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DSW1 VLAN 10: <code>2001:db8:acad:10::1/64</code> och link-local <code>fe80::1</code>. VLAN 20: <code>2001:db8:acad:20::1/64</code> och <code>fe80::1</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t78"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">PC-L1 och PC-E1: IPv6 Configuration → <b>Automatic</b>. Vänta några sekunder.</span></label>
+        <label class="task"><input type="checkbox" data-k="t79"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>ipconfig</code> på PC-L1 och skriv ner IPv6-adressen och gatewayen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t80"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Pinga PC-E1:s IPv6-adress från PC-L1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t81"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ipv6 interface brief</code> och <code>show ipv6 route</code> på DSW1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t82"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Vilken IPv6-adress fick PC-L1? Vilken del kom från switchen och vilken skapade datorn själv? Vad blev gatewayen?</div><textarea data-k="q9" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 10 ================= -->
+    <section class="del" id="del10">
+      <div class="del-head"><div class="del-no">10</div><h2>Företags-WLAN med controller</h2></div>
+      <p class="goal">På en skola med 40 access points konfigurerar man inte varje AP för sig. En <b>WLC</b> (Wireless LAN Controller) styr alla. Personalen loggar in med eget konto via <b>RADIUS</b> (WPA2-Enterprise). Eleverna har ett gemensamt lösenord.</p>
+
+      <div class="tbl"><table>
+        <tr><th>WLAN</th><th>SSID</th><th>Säkerhet</th><th>VLAN</th><th>För</th></tr>
+        <tr><td class="m">1</td><td class="m">JENSEN-PERSONAL</td><td>WPA2-Enterprise (802.1X, RADIUS)</td><td class="m">10</td><td>Lärare, eget konto</td></tr>
+        <tr><td class="m">2</td><td class="m">JENSEN-ELEV</td><td>WPA2-PSK, <code>JensenElev26</code></td><td class="m">30</td><td>Elever</td></tr>
+      </table></div>
+
+      <h3>RADIUS på servern</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t83"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV → Services → AAA: slå på tjänsten. Lägg till nätverksklienten <code>WLC</code>, IP 10.10.60.5, secret <code>RadiusNyckel26</code>, typ Radius.</span></label>
+        <label class="task"><input type="checkbox" data-k="t84"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg till användarna <code>larare1</code> / <code>Larare1pass</code> och <code>larare2</code> / <code>Larare2pass</code>.</span></label>
+      </div>
+
+      <h3>Grundinställning av WLC</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t85"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">WLC → Config: management-adress 10.10.60.5, mask 255.255.255.0, gateway 10.10.60.1.</span></label>
+        <label class="task"><input type="checkbox" data-k="t86"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC-L1: öppna webbläsaren och gå till <code>https://10.10.60.5</code> (tillfälligt: lägg PC-L1 i VLAN 60 om det inte går). Första gången skapar du ett admin-konto, till exempel <code>admin</code> / <code>Wlc2026admin</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t87"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Vänta tills LAP1 och LAP2 har registrerat sig. Under <b>Wireless → Access Points</b> ska båda synas. Gör de inte det: kontrollera att de fått adress i 10.10.60.x och att WLC Address finns i DHCP-poolen.</span></label>
+      </div>
+
+      <h3>Interface, RADIUS och WLAN på WLC</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t88"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Controller → Interfaces → New</b>: interface <code>personal</code>, VLAN 10, IP 10.10.10.5, gateway 10.10.10.1, port 1, DHCP-server 10.10.50.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t89"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Nytt interface <code>elev</code>, VLAN 30, IP 10.10.30.5, gateway 10.10.30.1, port 1, DHCP-server 10.10.50.10.</span></label>
+        <label class="task"><input type="checkbox" data-k="t90"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Security → AAA → RADIUS → Authentication → New</b>: server 10.10.50.10, shared secret <code>RadiusNyckel26</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t91"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>WLANs → Create New</b>: JENSEN-PERSONAL. Koppla till interface <code>personal</code>. Security: WPA2, 802.1X. AAA Servers: välj RADIUS-servern. Enable.</span></label>
+        <label class="task"><input type="checkbox" data-k="t92"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Nytt WLAN JENSEN-ELEV. Koppla till interface <code>elev</code>. Security: WPA2, PSK <code>JensenElev26</code>. Enable.</span></label>
+      </div>
+
+      <h3>Klienter</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t93"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ny <b>Laptop-PT</b> som heter LAPTOP-L. Byt nätverkskortet till <b>WPC300N</b> (stäng av först).</span></label>
+        <label class="task"><input type="checkbox" data-k="t94"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">LAPTOP-L → Config → Wireless0: SSID JENSEN-PERSONAL, <b>WPA2</b> (inte WPA2-PSK), User ID <code>larare1</code>, lösenord <code>Larare1pass</code>. Den ska få 10.10.10.x.</span></label>
+        <label class="task"><input type="checkbox" data-k="t95"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Ny <b>Smartphone-PT</b> som heter MOBIL-E. Anslut till JENSEN-ELEV med PSK. Den ska få 10.10.30.x.</span></label>
+        <label class="task"><input type="checkbox" data-k="t96"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa: LAPTOP-L når intranätet. MOBIL-E når www.bibliotek.test.</span></label>
+        <label class="task"><input type="checkbox" data-k="t97"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv fel lösenord för larare1. Vad händer?</span></label>
+        <label class="task"><input type="checkbox" data-k="t98"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Öppna PC Wireless på LAPTOP-L och titta på signalstyrkan. Byt till Physical-vyn, flytta laptopen långt från LAP1 och närmare LAP2. Hur ändras signalen? Byter den AP?</span></label>
+        <label class="task"><input type="checkbox" data-k="t99"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">MOBIL-E är ansluten till LAP2, som sitter i VLAN 60. Ändå får mobilen en adress i VLAN 30. Hur går det till?</div><textarea data-k="q10" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Varför är WPA2-Enterprise bättre än ett gemensamt lösenord för personalen?</div><textarea data-k="q11" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 11 ================= -->
+    <section class="del" id="del11">
+      <div class="del-head"><div class="del-no">11</div><h2>Loggar och tid</h2></div>
+      <p class="goal">Om nätet går ner vill IT-avdelningen veta exakt när det hände och vad som gick sönder först. Nu ska alla enheter ha samma klocka och skicka sina loggar till servern.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t100"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV → Services → NTP: slå på. SRV → Services → SYSLOG: slå på.</span></label>
+        <label class="task"><input type="checkbox" data-k="t101"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På R-EDGE, DSW1, DSW2, ASW1 och ASW2: <code>ntp server 10.10.50.10</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t102"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På samma enheter: <code>service timestamps log datetime msec</code> och <code>logging host 10.10.50.10</code> (i äldre versioner: <code>logging 10.10.50.10</code>).</span></label>
+        <label class="task"><input type="checkbox" data-k="t103"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Kör <code>show ntp status</code> och <code>show clock</code>. Det kan ta en minut innan klockan är synkad.</span></label>
+        <label class="task"><input type="checkbox" data-k="t104"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Gör <code>shutdown</code> och <code>no shutdown</code> på ASW2 Fa0/2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t105"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Öppna SRV → Services → SYSLOG. Hitta meddelandena från ASW2 med tid.</span></label>
+        <label class="task"><input type="checkbox" data-k="t106"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Dra ur en kabel i EtherChannel och koppla tillbaka. Hitta loggarna från DSW1 och DSW2.</span></label>
+        <label class="task"><input type="checkbox" data-k="t107"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Varför är det viktigt att alla enheter har exakt samma tid när man felsöker?</div><textarea data-k="q12" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 12 ================= -->
+    <section class="del" id="del12">
+      <div class="del-head"><div class="del-no">12</div><h2>Smarta skolan</h2></div>
+      <p class="goal">IT-avdelningen vill att dörren till datasalen larmar om den öppnas efter skoltid, och att fläkten i serverrummet kan styras från personalrummet. IoT-prylar ska ligga i ett eget VLAN så att de inte kan nå elevernas datorer.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t108"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">ASW2: Fa0/10-12 som access i VLAN 40.</span></label>
+        <label class="task"><input type="checkbox" data-k="t109"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg ut en <b>Door</b>, en <b>Siren</b> och en <b>Ceiling Fan</b> (under Home eller Smart Things). Koppla dem trådat till ASW2 Fa0/10-12. Byt nätverkskort i Physical om de saknar Ethernet.</span></label>
+        <label class="task"><input type="checkbox" data-k="t110"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På varje: Config → FastEthernet: DHCP. De ska få 10.10.40.x.</span></label>
+        <label class="task"><input type="checkbox" data-k="t111"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SRV → Services → IoT: slå på.</span></label>
+        <label class="task"><input type="checkbox" data-k="t112"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC-L1: gå till <code>http://10.10.50.10</code>, klicka <i>Sign up now</i> och skapa kontot <code>itadmin</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t113"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På varje IoT-enhet: Config → Settings → IoT Server: <b>Remote Server</b>, 10.10.50.10, användare itadmin. Klicka Connect.</span></label>
+        <label class="task"><input type="checkbox" data-k="t114"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Logga in från PC-L1. Alla tre enheter ska synas. Slå på fläkten därifrån.</span></label>
+        <label class="task"><input type="checkbox" data-k="t115"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Under <b>Conditions</b>: skapa regeln <i>om Door är öppen, sätt Siren till på</i>, och en till: <i>om Door är stängd, sätt Siren till av</i>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t116"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa: håll <b>Alt</b> och klicka på dörren så att den öppnas. Sirenen ska börja låta. Stäng dörren igen.</span></label>
+        <label class="task"><input type="checkbox" data-k="t117"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Från PC-E1: försök nå <code>http://10.10.50.10</code> och logga in. (Det fungerar just nu. Det lagar du i del 15.)</span></label>
+        <label class="task"><input type="checkbox" data-k="t118"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+
+      <div class="q"><span class="qn"></span><div class="qb"><div class="qt">Varför ska IoT-prylar ligga i ett eget VLAN?</div><textarea data-k="q13" rows="3" placeholder="Skriv ditt svar här"></textarea></div></div>
+    </section>
+
+    <!-- ================= DEL 13 ================= -->
+    <section class="del" id="del13">
+      <div class="del-head"><div class="del-no">13</div><h2>Något är trasigt</h2></div>
+      <p class="goal">Spara en kopia först. Lägg in ett fel i taget, se vad som händer, hitta felet med ett kommando och laga det innan du går vidare. Vissa fel syns direkt, andra märks bara när något annat går sönder.</p>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t119"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 1.</b> På DSW2: ändra Fa0/21-22 till <code>channel-group 1 mode on</code>. Kör <code>show etherchannel summary</code> på båda.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t120"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 2.</b> SRV → DHCP: ändra gateway i poolen ELEV-LAB till 10.10.20.254. Kör <code>ipconfig /renew</code> på PC-E1 och öppna www.bibliotek.test.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t121"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 3.</b> På R-EDGE: ta bort <code>default-information originate</code> under OSPF. Surfa från PC-L1.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t122"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 4.</b> På DSW2 VLAN 10: ändra till <code>standby 11 ip 10.10.10.1</code> (fel grupp). Kör <code>show standby brief</code> på båda.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t123"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 5.</b> På DSW2: <code>spanning-tree vlan 10 root primary</code>. Pinga fortfarande fungerar. Kör <code>tracert</code> från PC-L1 och <code>show spanning-tree vlan 10</code> på ASW1.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t124"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 6.</b> På WLC: disable WLAN JENSEN-ELEV. Titta på MOBIL-E.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t125"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 7.</b> SRV → AAA: ändra secret för klienten WLC till <code>fel</code>. Anslut LAPTOP-L på nytt.</span></label>
+      
+        <label class="task"><input type="checkbox" data-k="t126"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt"><b>Fel 8.</b> På ASW1: <code>switchport trunk allowed vlan remove 10</code> på G0/1 och G0/2. Kör <code>ipconfig /renew</code> på PC-L1.</span></label>
+      
+      </div>
+
+      <h3>Felloggen</h3>
+      
+      <div class="tbl"><table>
+        <tr><th>Fel</th><th>Vad såg du?</th><th>Kommandot som visade felet</th><th>Hur lagade du det?</th></tr>
+        <tr><td class="m">1</td><td><input class="blank" data-k="fel1a"></td><td><input class="blank" data-k="fel1b"></td><td><input class="blank" data-k="fel1c"></td></tr>
+        <tr><td class="m">2</td><td><input class="blank" data-k="fel2a"></td><td><input class="blank" data-k="fel2b"></td><td><input class="blank" data-k="fel2c"></td></tr>
+        <tr><td class="m">3</td><td><input class="blank" data-k="fel3a"></td><td><input class="blank" data-k="fel3b"></td><td><input class="blank" data-k="fel3c"></td></tr>
+        <tr><td class="m">4</td><td><input class="blank" data-k="fel4a"></td><td><input class="blank" data-k="fel4b"></td><td><input class="blank" data-k="fel4c"></td></tr>
+        <tr><td class="m">5</td><td><input class="blank" data-k="fel5a"></td><td><input class="blank" data-k="fel5b"></td><td><input class="blank" data-k="fel5c"></td></tr>
+        <tr><td class="m">6</td><td><input class="blank" data-k="fel6a"></td><td><input class="blank" data-k="fel6b"></td><td><input class="blank" data-k="fel6c"></td></tr>
+        <tr><td class="m">7</td><td><input class="blank" data-k="fel7a"></td><td><input class="blank" data-k="fel7b"></td><td><input class="blank" data-k="fel7c"></td></tr>
+        <tr><td class="m">8</td><td><input class="blank" data-k="fel8a"></td><td><input class="blank" data-k="fel8b"></td><td><input class="blank" data-k="fel8c"></td></tr>
+      </table></div>
+      
+      
+
+      <h3>Ärenderundan</h3>
+      <p>Byt dator med bänkgrannen. Lägg in två fel i grannens fil och skriv ett <b>ärende</b> som en användare skulle skriva, till exempel "Hej, jag är lärare i plan 1 och kommer inte ut på internet sedan lunch. /Anna". Byt tillbaka. Lös ärendet och skriv ett kort svar till "Anna" som en it-tekniker: vad var fel, vad gjorde du, vad ska hon göra nu.</p>
+      
+      <textarea data-k="arende" rows="5" placeholder="Ditt svar på ärendet"></textarea>
+      
+    </section>
+
+    <!-- ================= DEL 14 ================= -->
+    <section class="del" id="del14">
+      <div class="del-head"><div class="del-no">14</div><h2>Eget uppdrag: nya våningen</h2></div>
+      <p class="goal">Skolan har hyrt ett tredje våningsplan med nya klassrum. Du får bara specen. Allt det här har du gjort tidigare i dag.</p>
+
+      <div class="tbl"><table>
+        <tr><th>Vad</th><th>Spec</th></tr>
+        <tr><td>Nya enheter</td><td class="m">ASW3 (2960-24TT), PC-P1, PC-P2, LAP3</td></tr>
+        <tr><td>Uplinks</td><td class="m">ASW3 G0/1 → DSW1 Fa0/3, ASW3 G0/2 → DSW2 Fa0/3</td></tr>
+        <tr><td>Nytt VLAN</td><td class="m">70 PLAN3, 10.10.70.0/24, HSRP-aktiv DSW2</td></tr>
+        <tr><td>PC</td><td class="m">PC-P1, PC-P2 i VLAN 70 via DHCP</td></tr>
+        <tr><td>Wifi</td><td class="m">LAP3 på DSW2 Fa0/11 (PoE), VLAN 60</td></tr>
+        <tr><td>Krav</td><td>PC-P1 når intranätet och internet. Om DSW2 tappar VLAN 70 tar DSW1 över. LAP3 syns i WLC:n. Loggar från ASW3 hamnar på SRV.</td></tr>
+      </table></div>
+
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t127"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Placera, döp och kabla.</span></label>
+        <label class="task"><input type="checkbox" data-k="t128"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Grundkonfig, VLAN och trunkar på ASW3. Glöm inte att VLAN 70 måste finnas på DSW1 och DSW2 också.</span></label>
+        <label class="task"><input type="checkbox" data-k="t129"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">SVI, HSRP och Spanning Tree för VLAN 70 på kärnan.</span></label>
+        <label class="task"><input type="checkbox" data-k="t130"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">DHCP-pool på SRV. Behövs något mer för att OSPF och NAT ska fungera för det nya nätet?</span></label>
+        <label class="task"><input type="checkbox" data-k="t131"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">LAP3, NTP och Syslog.</span></label>
+        <label class="task"><input type="checkbox" data-k="t132"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa alla krav.</span></label>
+        <label class="task"><input type="checkbox" data-k="t133"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skriv IP-nät och portar som Notes vid de nya enheterna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t134"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Spara.</span></label>
+      </div>
+
+      
+    </section>
+
+    <!-- ================= DEL 15 ================= -->
+    <section class="del" id="del15">
+      <div class="del-head"><div class="del-no">15</div><h2>Extra, för dig som är klar</h2></div>
+      <p class="goal">Frivilligt. För dig som är klar med allt annat.</p>
+
+      <h3>A. Eleverna ska inte nå personal, IoT eller switcharna</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t135"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Skapa en extended ACL <code>ELEV-IN</code> på DSW1 och DSW2 som stoppar trafik från 10.10.20.0/24 och 10.10.30.0/24 till VLAN 10, 40 och 99, men tillåter allt annat.</span></label>
+        <label class="task"><input type="checkbox" data-k="t136"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg den inkommande på <code>interface vlan 20</code> och <code>interface vlan 30</code> på båda kärnswitcharna.</span></label>
+        <label class="task"><input type="checkbox" data-k="t137"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Testa: PC-E1 når internet och SRV, men inte PC-L1, inte IoT-sidan på en IoT-enhet och inte ASW1.</span></label>
+      </div>
+      
+
+      <h3>B. DHCP snooping mot falska DHCP-servrar</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t138"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg en ny Server-PT på ASW2 Fa0/3 i VLAN 20. Slå på DHCP med gateway 6.6.6.6. Kör <code>ipconfig /renew</code> på PC-E2 några gånger. Vilken adress får den?</span></label>
+        <label class="task"><input type="checkbox" data-k="t139"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">På ASW2: <code>ip dhcp snooping</code>, <code>ip dhcp snooping vlan 20</code> och <code>ip dhcp snooping trust</code> på G0/1 och G0/2. På 2960 i Packet Tracer kan du också behöva <code>no ip dhcp snooping information option</code>.</span></label>
+        <label class="task"><input type="checkbox" data-k="t140"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Renew på PC-E2 igen. Nu ska bara den riktiga servern svara.</span></label>
+      </div>
+      
+
+      <h3>C. Dokumentation till IT-avdelningen</h3>
+      <div class="tasks">
+        <label class="task"><input type="checkbox" data-k="t141"><span class="box"><svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg></span><span class="tt">Lägg en stor Note i filen: en driftsdokumentation för IT-avdelningen. Vilka VLAN finns och vad är de till, vilken switch är aktiv var, vad händer om DSW1 går sönder, var hittar han loggarna, och hur lägger man till en ny lärare på wifi.</span></label>
+      </div>
+    </section>
+
+    <footer>
+      <span>Labb: Jensen Komvux</span>
+      <span>Hösten 2026</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  var V = document.body.getAttribute("data-v");
+  var KEY = "jensen-komvux-lab-" + V;
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { store = {}; }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {}
+    var tag = document.getElementById("savedTag");
+    if (tag) { tag.classList.add("show"); clearTimeout(persist.t); persist.t = setTimeout(function () { tag.classList.remove("show"); }, 1200); }
+  }
+
+  /* ---------- tema ---------- */
+  var root = document.documentElement;
+  document.getElementById("themeBtn").addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("jensen-komvux-theme", next); } catch (e) {}
+  });
+
+  /* ---------- facit-knapp (bara lärarversionen) ---------- */
+  var fb = document.getElementById("facitBtn");
+  if (fb) fb.addEventListener("click", function () {
+    var hidden = document.body.classList.toggle("hide-facit");
+    fb.textContent = hidden ? "Visa facit" : "Dölj facit";
+    fb.classList.toggle("on", hidden);
+  });
+
+  /* ---------- numrera frågor per del ---------- */
+  document.querySelectorAll("section.del").forEach(function (sec) {
+    var no = (sec.querySelector(".del-no") || {}).textContent || "";
+    var n = parseInt(no, 10);
+    sec.querySelectorAll(".qn").forEach(function (el, i) { el.textContent = (isNaN(n) ? "" : n + ".") + (i + 1); });
+  });
+
+  /* ---------- spara svar och bockar ---------- */
+  document.querySelectorAll("[data-k]").forEach(function (el) {
+    var k = el.getAttribute("data-k");
+    if (el.type === "checkbox") {
+      el.checked = !!store[k];
+      el.addEventListener("change", function () { store[k] = el.checked; persist(); progress(); });
+    } else {
+      if (store[k] != null) el.value = store[k];
+      el.addEventListener("input", function () { store[k] = el.value; persist(); grow(el); });
+      grow(el);
+    }
+  });
+  function grow(el) {
+    if (el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.height = Math.max(el.scrollHeight + 2, 70) + "px";
+  }
+
+  /* ---------- framsteg ---------- */
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".task input"));
+  function progress() {
+    var done = boxes.filter(function (b) { return b.checked; }).length;
+    var p = boxes.length ? Math.round(done / boxes.length * 100) : 0;
+    document.getElementById("meter").style.width = p + "%";
+    document.getElementById("pct").textContent = p + " %";
+    document.querySelectorAll("section.del").forEach(function (sec) {
+      var link = document.querySelector('.toc a[href="#' + sec.id + '"]');
+      if (!link) return;
+      var t = sec.querySelectorAll(".task input");
+      var all = t.length && Array.prototype.every.call(t, function (b) { return b.checked; });
+      link.classList.toggle("done", !!all);
+    });
+  }
+  progress();
+
+  /* ---------- kopiera-knappar ---------- */
+  document.querySelectorAll("pre.cli").forEach(function (pre) {
+    var b = document.createElement("button");
+    b.className = "copy";
+    b.type = "button";
+    b.textContent = "kopiera";
+    b.addEventListener("click", function () {
+      var txt = pre.querySelector("code").innerText;
+      var done = function () { b.textContent = "kopierat"; setTimeout(function () { b.textContent = "kopiera"; }, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, done); else done();
+    });
+    pre.appendChild(b);
+  });
+
+  /* ---------- tona in vid scroll ---------- */
+  var reveal = document.querySelectorAll(".hero, .del-head, .q, .tasks, .tbl, .note, pre.cli, .facit, details.hint, .goal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -40px 0px" });
+    reveal.forEach(function (el) { el.classList.add("rv"); io.observe(el); });
+
+    var links = document.querySelectorAll(".toc a");
+    var io2 = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle("cur", a.getAttribute("href") === "#" + e.target.id); });
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    document.querySelectorAll("#start, section.del").forEach(function (s) { io2.observe(s); });
+  }
+
+  /* ---------- topologi ---------- */
+  var svg = document.getElementById("topo");
+  var NS = "http://www.w3.org/2000/svg";
+  function mk(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  var N = {
+    WEB:     { x: 935, y: 58,  t: "server", ip: "198.51.100.20", d: "En webbserver ute på \"internet\": www.bibliotek.test." },
+    ISP:     { x: 800, y: 58,  t: "router", ip: "203.0.113.5 / 198.51.100.1", d: "Internetleverantören. Ser bara skolans publika adress tack vare NAT." },
+    "R-EDGE":{ x: 560, y: 105, t: "router", ip: "10.1.1.1, 10.1.1.5, 203.0.113.6", d: "Kantroutern. OSPF mot kärnan, NAT och default route mot internet." },
+    DSW1:    { x: 430, y: 215, t: "switch", ip: ".2 i alla VLAN, aktiv i 10/50/60/99", d: "Kärnswitch 1 (layer 3). Routar mellan VLAN, HSRP-aktiv och STP-root för personal, server, WLAN och mgmt." },
+    DSW2:    { x: 690, y: 215, t: "switch", ip: ".3 i alla VLAN, aktiv i 20/30/40", d: "Kärnswitch 2 (layer 3). Tar över allt om DSW1 går ner. Aktiv för elevnäten och IoT." },
+    WLC:     { x: 500, y: 330, t: "wlc", ip: "10.10.60.5", d: "Wireless LAN Controller. Styr alla access points och skickar personal-wifi till VLAN 10, elev-wifi till VLAN 30." },
+    SRV:     { x: 625, y: 330, t: "server", ip: "10.10.50.10", d: "DHCP, DNS, RADIUS, NTP, Syslog och IoT-server. Hela skolans hjärna." },
+    ASW1:    { x: 200, y: 385, t: "switch", ip: "10.10.99.11", d: "Plan 1. Personalens switch med två uplinks, en till varje kärnswitch." },
+    ASW2:    { x: 880, y: 385, t: "switch", ip: "10.10.99.12", d: "Plan 2. Datasalen och IoT. Två uplinks." },
+    LAP1:    { x: 110, y: 240, t: "ap", ip: "10.10.60.x (DHCP)", d: "Access point i plan 1. Får ström via PoE och all konfig från WLC:n." },
+    LAP2:    { x: 935, y: 240, t: "ap", ip: "10.10.60.x (DHCP)", d: "Access point i plan 2." },
+    "LAPTOP-L": { x: 225, y: 270, t: "pc", ip: "10.10.10.x via wifi", d: "Lärarens laptop. Loggar in på JENSEN-PERSONAL med eget konto (RADIUS)." },
+    "MOBIL-E":  { x: 820, y: 270, t: "pc", ip: "10.10.30.x via wifi", d: "Elevens mobil på JENSEN-ELEV." },
+    "PC-L1": { x: 100, y: 470, t: "pc", ip: "10.10.10.x", d: "Lärardator i plan 1, VLAN 10." },
+    "PC-L2": { x: 200, y: 470, t: "pc", ip: "10.10.10.x", d: "Lärardator i plan 1, VLAN 10." },
+    SKRIVARE:{ x: 300, y: 470, t: "pc", ip: "10.10.10.x", d: "Personalrummets skrivare." },
+    "PC-E1": { x: 800, y: 470, t: "pc", ip: "10.10.20.x", d: "Elevdator i datasalen, VLAN 20." },
+    "PC-E2": { x: 880, y: 470, t: "pc", ip: "10.10.20.x", d: "Elevdator i datasalen, VLAN 20." },
+    IOT:     { x: 960, y: 470, t: "pc", ip: "10.10.40.x", d: "Dörr, siren och fläkt i VLAN 40. Styrs från IoT-servern på SRV." }
+  };
+  var LINKS = [
+    ["WEB", "ISP", "198.51.100.0/24"], ["ISP", "R-EDGE", "203.0.113.4/30"],
+    ["R-EDGE", "DSW1"], ["R-EDGE", "DSW2"],
+    ["DSW1", "DSW2", "EtherChannel", "chan"],
+    ["DSW1", "WLC"], ["DSW1", "SRV"], ["DSW1", "LAP1"], ["DSW2", "LAP2"],
+    ["ASW1", "DSW1", "", true], ["ASW1", "DSW2", "", true], ["ASW2", "DSW1", "", true], ["ASW2", "DSW2", "", true],
+    ["LAPTOP-L", "LAP1", "", "wifi"], ["MOBIL-E", "LAP2", "", "wifi"],
+    ["ASW1", "PC-L1"], ["ASW1", "PC-L2"], ["ASW1", "SKRIVARE"],
+    ["ASW2", "PC-E1"], ["ASW2", "PC-E2"], ["ASW2", "IOT"]
+  ];
+  var zones = [
+    { x: 40, y: 175, w: 305, h: 325, t: "PLAN 1" },
+    { x: 365, y: 70, w: 390, h: 305, t: "SERVERRUM" },
+    { x: 770, y: 175, w: 222, h: 325, t: "PLAN 2" },
+    { x: 740, y: 4, w: 253, h: 106, t: "INTERNET" }
+  ];
+  zones.forEach(function (z) {
+    mk("rect", { x: z.x, y: z.y, width: z.w, height: z.h, rx: 14, class: "zone" });
+    var tx = mk("text", { x: z.x + 12, y: z.y + 20, class: "zlabel" });
+    tx.textContent = z.t;
+  });
+  LINKS.forEach(function (l) {
+    var a = N[l[0]], b = N[l[1]];
+    mk("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "link" + (l[3] === "wifi" ? " wifi" : l[3] === "chan" ? " chan" : l[3] ? " trunk" : "") });
+    if (l[2]) {
+      var t = mk("text", { x: (a.x + b.x) / 2 + (l[3] ? 10 : 0), y: (a.y + b.y) / 2 - 8, class: "llabel", "text-anchor": l[3] ? "start" : "middle" });
+      t.textContent = l[2];
+    }
+  });
+  var pktLayer = mk("g", {});
+  var info = document.getElementById("devinfo");
+  Object.keys(N).forEach(function (id) {
+    var n = N[id];
+    var g = mk("g", { class: "dev", transform: "translate(" + n.x + "," + n.y + ")", tabindex: "0" });
+    var labelY;
+    if (n.t === "router") {
+      mk("circle", { r: 24, class: "shape" }, g);
+      mk("path", { d: "M-12 -5h24m-5 -4l5 4-5 4M12 5h-24m5 -4l-5 4 5 4", class: "glyph" }, g);
+      labelY = 42;
+    } else if (n.t === "switch") {
+      mk("rect", { x: -32, y: -16, width: 64, height: 32, rx: 6, class: "shape" }, g);
+      mk("path", { d: "M-18 -5h36m-5 -4l5 4-5 4M18 5h-36m5 -4l-5 4 5 4", class: "glyph" }, g);
+      labelY = 34;
+    } else if (n.t === "server") {
+      mk("rect", { x: -14, y: -22, width: 28, height: 44, rx: 3, class: "shape" }, g);
+      mk("path", { d: "M-8 -12h16M-8 -4h16M-8 4h8", class: "glyph" }, g);
+      labelY = 38;
+    } else if (n.t === "ap") {
+      mk("circle", { r: 15, class: "shape" }, g);
+      mk("path", { d: "M-7 -1a10 10 0 0 1 14 0M-4 3a5 5 0 0 1 8 0M0 7h.01", class: "glyph" }, g);
+      labelY = 32;
+    } else if (n.t === "wlc") {
+      mk("rect", { x: -24, y: -13, width: 48, height: 26, rx: 4, class: "shape" }, g);
+      mk("path", { d: "M-12 2a13 13 0 0 1 24 0M-6 6a6 6 0 0 1 12 0", class: "glyph" }, g);
+      labelY = 31;
+    } else {
+      mk("rect", { x: -18, y: -15, width: 36, height: 24, rx: 3, class: "shape" }, g);
+      mk("path", { d: "M-8 16h16M0 9v7", class: "glyph" }, g);
+      labelY = 34;
+    }
+    var tx = mk("text", { y: labelY }, g);
+    tx.textContent = id === "WEB" ? "WEB-ISP" : id;
+    n.g = g;
+    function pick() {
+      document.querySelectorAll("#topo .dev").forEach(function (d) { d.classList.remove("sel"); });
+      g.classList.add("sel");
+      info.innerHTML = "<b>" + (id === "WEB" ? "WEB-ISP" : id) + "</b> &nbsp; <span class='mono' style='color:var(--soft)'>" + n.ip + "</span><br>" + n.d;
+    }
+    g.addEventListener("click", pick);
+    g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  });
+
+  var flows = [
+    { p: ["PC-E1", "ASW2", "DSW2", "R-EDGE", "ISP", "WEB"], c: "--acc", n: "Elev ut på internet via DSW2 och NAT" },
+    { p: ["LAPTOP-L", "LAP1", "DSW1", "WLC", "DSW1", "SRV"], c: "--teal", n: "Lärarens wifi: via WLC till RADIUS" },
+    { p: ["PC-L1", "ASW1", "DSW1", "SRV"], c: "--ok", n: "Lärare till servern via DSW1" },
+    { p: ["ASW1", "DSW2"], c: "--bad", n: "Spanning Tree blockerar en uplink", block: true }
+  ];
+  var legend = document.getElementById("legend");
+  flows.forEach(function (f) {
+    var s = document.createElement("span");
+    s.innerHTML = "<i style='background:var(" + f.c + ")'></i>" + f.n;
+    legend.appendChild(s);
+  });
+
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var running = !reduce, packets = [], fi = 0, last = performance.now(), spawnT = 1200;
+  var tb = document.getElementById("trafficBtn");
+  tb.textContent = running ? "Pausa trafiken" : "Starta trafiken";
+  tb.addEventListener("click", function () {
+    running = !running;
+    tb.textContent = running ? "Pausa trafiken" : "Starta trafiken";
+  });
+  function spawn() {
+    var f = flows[fi++ % flows.length];
+    var dot = mk("circle", { r: 7, class: "pkt" }, pktLayer);
+    dot.style.fill = "var(" + f.c + ")";
+    var a = N[f.p[0]];
+    dot.setAttribute("cx", a.x); dot.setAttribute("cy", a.y);
+    packets.push({ f: f, dot: dot, seg: 0, t: 0 });
+  }
+  function finish(pk) {
+    var end = N[pk.f.p[pk.f.p.length - 1]];
+    pk.dot.remove();
+    var el;
+    if (pk.f.block) {
+      el = mk("text", { x: end.x - 34, y: end.y - 20, class: "xmark" }, pktLayer);
+      el.textContent = "×";
+      el.style.fill = "var(--bad)";
+      setTimeout(function () { el.remove(); }, 1200);
+    } else {
+      el = mk("circle", { cx: end.x, cy: end.y, r: 14, class: "pulse" }, pktLayer);
+      el.style.stroke = "var(" + pk.f.c + ")";
+      setTimeout(function () { el.remove(); }, 900);
+    }
+  }
+  function frame(now) {
+    var dt = Math.min(now - last, 50);
+    last = now;
+    if (running) {
+      spawnT += dt;
+      if (spawnT > 1500) { spawnT = 0; spawn(); }
+      packets = packets.filter(function (pk) {
+        var a = N[pk.f.p[pk.seg]], b = N[pk.f.p[pk.seg + 1]];
+        var len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        pk.t += dt * 0.2 / len;
+        if (pk.t >= 1) {
+          pk.seg++;
+          pk.t = 0;
+          if (pk.seg >= pk.f.p.length - 1) { finish(pk); return false; }
+          a = N[pk.f.p[pk.seg]]; b = N[pk.f.p[pk.seg + 1]];
+        }
+        pk.dot.setAttribute("cx", a.x + (b.x - a.x) * pk.t);
+        pk.dot.setAttribute("cy", a.y + (b.y - a.y) * pk.t);
+        return true;
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
