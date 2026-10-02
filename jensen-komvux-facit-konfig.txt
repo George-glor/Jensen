@@ -1,0 +1,784 @@
+JENSEN KOMVUX - FACIT, FÄRDIG KONFIGURATION
+Dator- och kommunikationsteknik 3 / Cisco Packet Tracer
+=====================================================================
+
+Så här använder du filen:
+1. Bygg topologin och dra kablarna enligt del 2 i labben.
+2. Klicka på enheten, välj fliken CLI och svara "no" på frågan om
+   initial configuration dialog.
+3. Kopiera hela blocket för enheten och klistra in det i CLI.
+4. Gör likadant för nästa enhet.
+5. Ställ in server, WLC, PC och IoT för hand enligt slutet av filen.
+
+Blocken ger färdigt läge efter del 4-12.
+IPv6 (del 9), nya våningen (del 14) och extra (del 15) ligger i egna
+block längre ner, eftersom de kräver omstart eller nya enheter.
+
+Byggd för: 3560-24PS (DSW1, DSW2), 2960-24TT (ASW1, ASW2),
+2911 (R-EDGE, ISP), WLC-2504.
+
+
+=====================================================================
+DSW1  (kärnswitch 1, layer 3)
+=====================================================================
+enable
+configure terminal
+hostname DSW1
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+ip domain-name jensen.local
+username admin secret Jensen2026!
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+ip routing
+!
+vlan 10
+ name PERSONAL
+vlan 20
+ name ELEV-LAB
+vlan 30
+ name ELEV-WIFI
+vlan 40
+ name IOT
+vlan 50
+ name SERVER
+vlan 60
+ name WLAN
+vlan 99
+ name MGMT
+ exit
+!
+spanning-tree vlan 10,50,60,99 root primary
+spanning-tree vlan 20,30,40 root secondary
+!
+interface range fa0/1-2
+ description Uplink fran ASW1 och ASW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface range fa0/21-22
+ description EtherChannel till DSW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ channel-group 1 mode active
+ exit
+interface port-channel 1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface fa0/10
+ description LAP1
+ switchport mode access
+ switchport access vlan 60
+ exit
+interface fa0/11
+ description WLC
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 60
+ switchport trunk allowed vlan 10,30,60
+ exit
+interface fa0/12
+ description SRV
+ switchport mode access
+ switchport access vlan 50
+ exit
+interface g0/1
+ description Till R-EDGE G0/0
+ no switchport
+ ip address 10.1.1.2 255.255.255.252
+ no shutdown
+ exit
+!
+interface vlan 10
+ ip address 10.10.10.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 10 ip 10.10.10.1
+ standby 10 priority 150
+ standby 10 preempt
+ no shutdown
+ exit
+interface vlan 20
+ ip address 10.10.20.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 20 ip 10.10.20.1
+ no shutdown
+ exit
+interface vlan 30
+ ip address 10.10.30.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 30 ip 10.10.30.1
+ no shutdown
+ exit
+interface vlan 40
+ ip address 10.10.40.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 40 ip 10.10.40.1
+ no shutdown
+ exit
+interface vlan 50
+ ip address 10.10.50.2 255.255.255.0
+ standby version 2
+ standby 50 ip 10.10.50.1
+ standby 50 priority 150
+ standby 50 preempt
+ no shutdown
+ exit
+interface vlan 60
+ ip address 10.10.60.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 60 ip 10.10.60.1
+ standby 60 priority 150
+ standby 60 preempt
+ no shutdown
+ exit
+interface vlan 99
+ ip address 10.10.99.2 255.255.255.0
+ standby version 2
+ standby 99 ip 10.10.99.1
+ standby 99 priority 150
+ standby 99 preempt
+ no shutdown
+ exit
+!
+router ospf 1
+ router-id 1.1.1.1
+ passive-interface default
+ no passive-interface g0/1
+ network 10.1.1.0 0.0.0.3 area 0
+ network 10.10.0.0 0.0.255.255 area 0
+ exit
+!
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+!
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+ exit
+end
+write memory
+
+
+=====================================================================
+DSW2  (kärnswitch 2, layer 3)
+=====================================================================
+enable
+configure terminal
+hostname DSW2
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+ip domain-name jensen.local
+username admin secret Jensen2026!
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+ip routing
+!
+vlan 10
+ name PERSONAL
+vlan 20
+ name ELEV-LAB
+vlan 30
+ name ELEV-WIFI
+vlan 40
+ name IOT
+vlan 50
+ name SERVER
+vlan 60
+ name WLAN
+vlan 99
+ name MGMT
+ exit
+!
+spanning-tree vlan 20,30,40 root primary
+spanning-tree vlan 10,50,60,99 root secondary
+!
+interface range fa0/1-2
+ description Uplink fran ASW1 och ASW2
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface range fa0/21-22
+ description EtherChannel till DSW1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ channel-group 1 mode active
+ exit
+interface port-channel 1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface fa0/10
+ description LAP2
+ switchport mode access
+ switchport access vlan 60
+ exit
+interface g0/1
+ description Till R-EDGE G0/1
+ no switchport
+ ip address 10.1.1.6 255.255.255.252
+ no shutdown
+ exit
+!
+interface vlan 10
+ ip address 10.10.10.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 10 ip 10.10.10.1
+ no shutdown
+ exit
+interface vlan 20
+ ip address 10.10.20.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 20 ip 10.10.20.1
+ standby 20 priority 150
+ standby 20 preempt
+ no shutdown
+ exit
+interface vlan 30
+ ip address 10.10.30.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 30 ip 10.10.30.1
+ standby 30 priority 150
+ standby 30 preempt
+ no shutdown
+ exit
+interface vlan 40
+ ip address 10.10.40.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 40 ip 10.10.40.1
+ standby 40 priority 150
+ standby 40 preempt
+ no shutdown
+ exit
+interface vlan 50
+ ip address 10.10.50.3 255.255.255.0
+ standby version 2
+ standby 50 ip 10.10.50.1
+ no shutdown
+ exit
+interface vlan 60
+ ip address 10.10.60.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 60 ip 10.10.60.1
+ no shutdown
+ exit
+interface vlan 99
+ ip address 10.10.99.3 255.255.255.0
+ standby version 2
+ standby 99 ip 10.10.99.1
+ no shutdown
+ exit
+!
+router ospf 1
+ router-id 2.2.2.2
+ passive-interface default
+ no passive-interface g0/1
+ network 10.1.1.4 0.0.0.3 area 0
+ network 10.10.0.0 0.0.255.255 area 0
+ exit
+!
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+!
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+ exit
+end
+write memory
+
+
+=====================================================================
+R-EDGE  (kantrouter mot internet)
+=====================================================================
+enable
+configure terminal
+hostname R-EDGE
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+ip domain-name jensen.local
+username admin secret Jensen2026!
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+interface g0/0
+ description Till DSW1 G0/1
+ ip address 10.1.1.1 255.255.255.252
+ ip nat inside
+ no shutdown
+ exit
+interface g0/1
+ description Till DSW2 G0/1
+ ip address 10.1.1.5 255.255.255.252
+ ip nat inside
+ no shutdown
+ exit
+interface g0/2
+ description Till ISP
+ ip address 203.0.113.6 255.255.255.252
+ ip nat outside
+ no shutdown
+ exit
+!
+ip route 0.0.0.0 0.0.0.0 203.0.113.5
+!
+router ospf 1
+ router-id 3.3.3.3
+ network 10.1.1.0 0.0.0.3 area 0
+ network 10.1.1.4 0.0.0.3 area 0
+ default-information originate
+ exit
+!
+access-list 1 permit 10.10.0.0 0.0.255.255
+ip nat inside source list 1 interface g0/2 overload
+!
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+!
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+ exit
+end
+write memory
+
+
+=====================================================================
+ISP  (internetleverantören)
+=====================================================================
+enable
+configure terminal
+hostname ISP
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #ISP. Endast behorig personal.#
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+interface g0/1
+ description Till kund Jensen Komvux
+ ip address 203.0.113.5 255.255.255.252
+ no shutdown
+ exit
+interface g0/0
+ description Internet
+ ip address 198.51.100.1 255.255.255.0
+ no shutdown
+ exit
+end
+write memory
+
+! ISP behöver ingen route till skolans 10.10-nät.
+! Tack vare NAT på R-EDGE ser ISP bara adressen 203.0.113.6.
+
+
+=====================================================================
+ASW1  (plan 1, personal)
+=====================================================================
+enable
+configure terminal
+hostname ASW1
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+vlan 10
+ name PERSONAL
+vlan 20
+ name ELEV-LAB
+vlan 40
+ name IOT
+vlan 99
+ name MGMT
+ exit
+!
+interface range g0/1-2
+ description Uplink till DSW1 och DSW2
+ switchport mode trunk
+ exit
+interface range fa0/1-2, fa0/5
+ description PC-L1, PC-L2, SKRIVARE
+ switchport mode access
+ switchport access vlan 10
+ exit
+!
+interface vlan 99
+ ip address 10.10.99.11 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 10.10.99.1
+!
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+end
+write memory
+
+
+=====================================================================
+ASW2  (plan 2, datasal och IoT)
+=====================================================================
+enable
+configure terminal
+hostname ASW2
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+!
+line console 0
+ password cisco
+ login
+ exit
+!
+vlan 10
+ name PERSONAL
+vlan 20
+ name ELEV-LAB
+vlan 40
+ name IOT
+vlan 99
+ name MGMT
+ exit
+!
+interface range g0/1-2
+ description Uplink till DSW1 och DSW2
+ switchport mode trunk
+ exit
+interface range fa0/1-2
+ description PC-E1, PC-E2
+ switchport mode access
+ switchport access vlan 20
+ exit
+interface range fa0/10-12
+ description IoT: Door, Siren, Ceiling Fan
+ switchport mode access
+ switchport access vlan 40
+ exit
+!
+interface vlan 99
+ ip address 10.10.99.12 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 10.10.99.1
+!
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+end
+write memory
+
+
+=====================================================================
+DEL 9: IPv6 PÅ DSW1  (kör när allt ovan fungerar)
+=====================================================================
+! Steg 1. Switchen måste startas om för att kunna IPv6.
+enable
+configure terminal
+sdm prefer dual-ipv4-and-ipv6 default
+end
+write memory
+reload
+
+! Steg 2. Efter omstarten:
+enable
+configure terminal
+ipv6 unicast-routing
+interface vlan 10
+ ipv6 address 2001:db8:acad:10::1/64
+ ipv6 address fe80::1 link-local
+ exit
+interface vlan 20
+ ipv6 address 2001:db8:acad:20::1/64
+ ipv6 address fe80::1 link-local
+ exit
+end
+write memory
+
+! PC-L1 och PC-E1: IPv6 Configuration -> Automatic.
+
+
+=====================================================================
+ENHETER SOM STÄLLS IN FÖR HAND
+=====================================================================
+
+SRV  (Desktop -> IP Configuration)
+  IP 10.10.50.10   Mask 255.255.255.0
+  Gateway 10.10.50.1   DNS 10.10.50.10
+
+SRV  Services -> DHCP  (On, klicka Add för varje pool)
+  Pool        Gateway      DNS          Start        Mask           WLC Address
+  PERSONAL    10.10.10.1   10.10.50.10  10.10.10.21  255.255.255.0
+  ELEV-LAB    10.10.20.1   10.10.50.10  10.10.20.21  255.255.255.0
+  ELEV-WIFI   10.10.30.1   10.10.50.10  10.10.30.21  255.255.255.0
+  IOT         10.10.40.1   10.10.50.10  10.10.40.21  255.255.255.0
+  WLAN        10.10.60.1   10.10.50.10  10.10.60.21  255.255.255.0  10.10.60.5
+  serverPool  10.10.50.1   10.10.50.10  10.10.50.100 255.255.255.0
+  (serverPool går inte att ta bort, ändra den bara.)
+
+SRV  Services -> DNS  (On)
+  www.bibliotek.test     ->  198.51.100.20
+  intranat.jensen.local  ->  10.10.50.10
+
+SRV  Services -> HTTP: On
+SRV  Services -> NTP: On
+SRV  Services -> SYSLOG: On
+SRV  Services -> IoT: On
+
+SRV  Services -> AAA  (On)
+  Network Configuration:
+    Client Name WLC   Client IP 10.10.60.5
+    Secret RadiusNyckel26   ServerType Radius
+  User Setup:
+    larare1 / Larare1pass
+    larare2 / Larare2pass
+
+WEB  (Desktop -> IP Configuration)
+  IP 198.51.100.20   Mask 255.255.255.0   Gateway 198.51.100.1
+  Services -> HTTP: On
+
+WLC  (Config, sedan webbgränssnittet https://10.10.60.5 från PC-L1)
+  Management: 10.10.60.5 / 255.255.255.0, gateway 10.10.60.1,
+              VLAN 0 (otaggat, native VLAN 60 på DSW1 Fa0/11)
+  Admin-konto första gången: admin / Wlc2026admin
+  Controller -> Interfaces -> New:
+    personal   VLAN 10   10.10.10.5   gw 10.10.10.1   port 1   DHCP 10.10.50.10
+    elev       VLAN 30   10.10.30.5   gw 10.10.30.1   port 1   DHCP 10.10.50.10
+  Security -> AAA -> RADIUS -> Authentication -> New:
+    Server 10.10.50.10   port 1812   secret RadiusNyckel26
+  WLANs -> Create New:
+    WLAN 1  SSID JENSEN-PERSONAL  interface personal
+            Security: WPA2, 802.1X, AAA Server = 10.10.50.10   Enabled
+    WLAN 2  SSID JENSEN-ELEV      interface elev
+            Security: WPA2, PSK JensenElev26                    Enabled
+
+LAP1, LAP2
+  Ingen egen konfiguration. De får IP i 10.10.60.x via DHCP,
+  hittar WLC:n via "WLC Address" i poolen och hämtar allt därifrån.
+  Kontrollera att de har ström (PoE från 3560-24PS).
+
+PC-L1, PC-L2, SKRIVARE, PC-E1, PC-E2
+  IP Configuration -> DHCP
+
+LAPTOP-L  (Laptop-PT med WPC300N)
+  Config -> Wireless0: SSID JENSEN-PERSONAL
+  Authentication: WPA2 (inte WPA2-PSK)
+  User ID larare1   Password Larare1pass
+  IP via DHCP, ska bli 10.10.10.x
+
+MOBIL-E  (Smartphone-PT)
+  Config -> Wireless0: SSID JENSEN-ELEV
+  Authentication: WPA2-PSK   Pass Phrase JensenElev26
+  IP via DHCP, ska bli 10.10.30.x
+
+IoT  (Door, Siren, Ceiling Fan på ASW2 Fa0/10-12)
+  Config -> FastEthernet0: DHCP, ska bli 10.10.40.x
+  Config -> Settings -> IoT Server: Remote Server
+    Server Address 10.10.50.10   User itadmin   + lösenordet du valde
+  Kontot itadmin skapas från PC-L1: http://10.10.50.10 -> Sign up now
+  Conditions:
+    Om Door Open är true   -> Siren On = true
+    Om Door Open är false  -> Siren On = false
+  Testa: Alt + klick på dörren.
+
+
+=====================================================================
+DEL 14: NYA VÅNINGEN  (ASW3, VLAN 70, LAP3)
+=====================================================================
+
+! --- DSW1 ---
+configure terminal
+vlan 70
+ name PLAN3
+ exit
+interface fa0/3
+ description Uplink fran ASW3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface vlan 70
+ ip address 10.10.70.2 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 70 ip 10.10.70.1
+ no shutdown
+ exit
+spanning-tree vlan 70 root secondary
+end
+write memory
+
+! --- DSW2 ---
+configure terminal
+vlan 70
+ name PLAN3
+ exit
+interface fa0/3
+ description Uplink fran ASW3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ exit
+interface fa0/11
+ description LAP3
+ switchport mode access
+ switchport access vlan 60
+ exit
+interface vlan 70
+ ip address 10.10.70.3 255.255.255.0
+ ip helper-address 10.10.50.10
+ standby version 2
+ standby 70 ip 10.10.70.1
+ standby 70 priority 150
+ standby 70 preempt
+ no shutdown
+ exit
+spanning-tree vlan 70 root primary
+end
+write memory
+
+! --- ASW3 ---
+enable
+configure terminal
+hostname ASW3
+no ip domain-lookup
+enable secret class
+service password-encryption
+banner motd #Jensen Komvux. Endast behorig personal.#
+line console 0
+ password cisco
+ login
+ exit
+vlan 70
+ name PLAN3
+vlan 99
+ name MGMT
+ exit
+interface range g0/1-2
+ switchport mode trunk
+ exit
+interface range fa0/1-2
+ description PC-P1, PC-P2
+ switchport mode access
+ switchport access vlan 70
+ exit
+interface vlan 99
+ ip address 10.10.99.13 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 10.10.99.1
+ntp server 10.10.50.10
+service timestamps log datetime msec
+logging host 10.10.50.10
+end
+write memory
+
+! SRV -> DHCP: ny pool PLAN3
+!   Gateway 10.10.70.1  DNS 10.10.50.10  Start 10.10.70.21  Mask 255.255.255.0
+! OSPF och NAT behöver inte ändras. network 10.10.0.0 0.0.255.255
+! och ACL 1 täcker redan 10.10.70.0/24.
+
+
+=====================================================================
+DEL 15: EXTRA
+=====================================================================
+
+! --- A. ACL på DSW1 OCH DSW2 ---
+configure terminal
+ip access-list extended ELEV-IN
+ deny ip any 10.10.10.0 0.0.0.255
+ deny ip any 10.10.40.0 0.0.0.255
+ deny ip any 10.10.99.0 0.0.0.255
+ permit ip any any
+ exit
+interface vlan 20
+ ip access-group ELEV-IN in
+ exit
+interface vlan 30
+ ip access-group ELEV-IN in
+ exit
+end
+write memory
+
+! --- B. DHCP snooping på ASW2 ---
+configure terminal
+ip dhcp snooping
+ip dhcp snooping vlan 20
+no ip dhcp snooping information option
+interface range g0/1-2
+ ip dhcp snooping trust
+ exit
+end
+write memory
+
+
+=====================================================================
+TESTA ATT ALLT FUNGERAR
+=====================================================================
+PC-L1    -> ping PC-E1 (10.10.20.x)            ska fungera
+PC-L1    -> http://intranat.jensen.local       ska fungera
+PC-E1    -> http://www.bibliotek.test          ska fungera
+PC-E1    -> tracert 198.51.100.20              via 10.10.20.3 (DSW2)
+PC-L1    -> tracert 198.51.100.20              via 10.10.10.2 (DSW1)
+LAPTOP-L -> får 10.10.10.x, når intranätet
+MOBIL-E  -> får 10.10.30.x, når www.bibliotek.test
+PC-L1    -> ssh -l admin 10.10.10.2            ska fungera
+
+På DSW1 och DSW2:
+  show etherchannel summary     Po1(SU), Fa0/21(P) Fa0/22(P)
+  show standby brief            DSW1 Active i 10, 50, 60, 99
+                                DSW2 Active i 20, 30, 40
+  show spanning-tree vlan 10    DSW1 är root
+  show ip route                 O*E2 0.0.0.0/0 via R-EDGE
+  show ntp status               Clock is synchronized
+På R-EDGE:
+  show ip ospf neighbor         två grannar, FULL
+  show ip nat translations      fylls när någon surfar ut
+På WLC (Wireless -> Access Points):
+  LAP1 och LAP2 ska synas
+På SRV (Services -> SYSLOG):
+  loggrader från switcharna när en port går upp eller ner
